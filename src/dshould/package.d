@@ -104,3 +104,15 @@ unittest
         .should.throwA!FluentException
         .where.its.msg.should.equal("test failed: expected empty array, but got [5]");
 }
+
+@("prints informative errors for approximate checks")
+unittest
+{
+    2.should.approximately(0.5).be(4)
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected 4 ± 0.5, but got 2");
+
+    (2.4).should.not.approximately(0.5).be(2)
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected value outside 2 ± 0.5, but got 2.4");
+}

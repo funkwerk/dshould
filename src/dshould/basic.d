@@ -188,7 +188,7 @@ if (isInstanceOf!(ShouldType, Should))
         auto lhs = data.lhs();
         auto rhs = data.rhs;
 
-        should.check(
+        check(
             mixin(format!checkString("lhs", "rhs")),
             format(": expected value %s, but got %s", message.format(rhs.quote), lhs.quote),
             file, line
@@ -240,6 +240,13 @@ if (isInstanceOf!(ShouldType, Should))
 void be(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
+    import std.traits : isDynamicArray;
+
+    static if (isDynamicArray!T)
+    {
+        pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
+    }
+
     should.allowOnlyWordsBefore!(["approximately", "not"], "equal");
 
     return should.addData!"rhs"(value).approximateCheck(file, line);
@@ -256,17 +263,29 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 void approximateCheck(Should)(Should should, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
+    import std.format : format;
     import std.math : abs;
 
     with (should)
     {
-        static if (should.hasWord!"not")
+        auto lhs = data.lhs();
+        auto rhs = data.rhs;
+
+        static if (hasWord!"not")
         {
-            mixin(gencheck!("abs(%s - %s) >= %s", ["lhs()", "rhs", "permissibleError"]));
+            check(
+                abs(lhs - rhs) >= data.permissibleError,
+                format(": expected value outside %s ± %s, but got %s", rhs, data.permissibleError, lhs),
+                file, line
+            );
         }
         else
         {
-            mixin(gencheck!("abs(%s - %s) < %s", ["lhs()", "rhs", "permissibleError"]));
+            check(
+                abs(lhs - rhs) < data.permissibleError,
+                format(": expected %s ± %s, but got %s", rhs, data.permissibleError, lhs),
+                file, line
+            );
         }
     }
 }
