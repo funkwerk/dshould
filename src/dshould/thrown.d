@@ -10,10 +10,14 @@ unittest
     import dshould.basic : be, equal, not, should;
 
     auto error = new Exception("");
-    void throwme() { throw error; }
 
-    throwme.should.throwAn!Exception.where.it.should.be(error);
-    throwme.should.throwAn!Exception.where.it.should.not.be(null);
+    /**
+     * Throws: Exception
+     */
+    void throwsException() { throw error; }
+
+    throwsException.should.throwAn!Exception.where.it.should.be(error);
+    throwsException.should.throwAn!Exception.where.it.should.not.be(null);
 
     2.should.be(5).because("it just should, okay")
         .should.throwA!FluentException.where.its.reason.should.equal("it just should, okay");
