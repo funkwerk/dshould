@@ -163,9 +163,7 @@ class FluentException : Exception
         this.leftPart = leftPart;
         this.rightPart = rightPart;
 
-        super("", file, line);
-
-        this.msg = this.message;
+        super(genMessage, file, line);
     }
 
     public this(string leftPart, string reason, string rightPart, string file, size_t line) pure @safe
@@ -174,18 +172,14 @@ class FluentException : Exception
         this.reason = reason;
         this.rightPart = rightPart;
 
-        super("", file, line);
-
-        this.msg = this.message;
+        super(genMessage, file, line);
     }
 
     public this(string msg, string file, size_t line) pure @safe
     {
         this.leftPart = msg;
 
-        super("", file, line);
-
-        this.msg = this.message;
+        super(genMessage, file, line);
     }
 
     public FluentException because(string reason) pure @safe
@@ -193,7 +187,7 @@ class FluentException : Exception
         return new FluentException(this.leftPart, reason, this.rightPart, this.file, this.line);
     }
 
-    public @property string message() pure @safe
+    private string genMessage() pure @safe
     {
         string message = "";
 

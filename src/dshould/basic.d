@@ -82,7 +82,7 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
                 auto lhs = data.lhs();
                 auto rhs = data.rhs;
 
-                check(lhs !is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs), file, line);
+                check(lhs !is rhs, format(": expected %s%s, but got %s", refInfo, rhs.quote, lhs.quote), file, line);
             }
         }
         else
@@ -93,12 +93,12 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
             static if (is(T == typeof(null)))
             {
-                check(lhs is null, format(": expected null, but got %s", lhs), file, line);
+                check(lhs is null, format(": expected null, but got %s", lhs.quote), file, line);
             }
             else
             {
 
-                check(lhs is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs), file, line);
+                check(lhs is rhs, format(": expected %s%s, but got %s", refInfo, rhs.quote, lhs.quote), file, line);
             }
         }
     }
@@ -190,7 +190,7 @@ if (isInstanceOf!(ShouldType, Should))
 
         should.check(
             mixin(format!checkString("lhs", "rhs")),
-            format(": expected value %s, but got %s", message.format(rhs), lhs),
+            format(": expected value %s, but got %s", message.format(rhs.quote), lhs.quote),
             file, line
         );
     }
@@ -268,5 +268,19 @@ if (isInstanceOf!(ShouldType, Should))
         {
             mixin(gencheck!("abs(%s - %s) < %s", ["lhs()", "rhs", "permissibleError"]));
         }
+    }
+}
+
+private string quote(T)(T t)
+{
+    import std.format : format;
+
+    static if (is(T: string))
+    {
+        return format!`'%s'`(t);
+    }
+    else
+    {
+        return format!`%s`(t);
     }
 }

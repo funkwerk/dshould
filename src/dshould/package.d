@@ -28,10 +28,31 @@ if (isInstanceOf!(ShouldType, Should))
     return should.basic.equal(should);
 }
 
+template throwA(T : Throwable)
+{
+    void throwA(Should, string file = __FILE__)(Should should, string msgTest, size_t line = __LINE__)
+    if (isInstanceOf!(ShouldType, Should))
+    {
+        dshould.thrown.throwA!T(should, file, line).where.its.msg.should.equal(msgTest, file, line);
+    }
+
+    auto throwA(Should, string file = __FILE__)(Should should, size_t line = __LINE__)
+    if (isInstanceOf!(ShouldType, Should))
+    {
+        return dshould.thrown.throwA!T(should, file, line);
+    }
+}
+
+unittest
+{
+    2.should.be(5).should.throwA!FluentException("test failed: expected 5, but got 2");
+}
+
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException.message.should.equal("test failed: expected 3, but got 2");
+    2.should.be(3).should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
@@ -40,19 +61,23 @@ unittest
     Object obj;
 
     obj.should.not.be(null)
-        .should.throwA!FluentException.message.should.equal("test failed: expected non-null, but got null");
+        .should.throwA!FluentException
+            .where.its.msg.should.equal("test failed: expected non-null, but got null");
 
     obj = new Object;
 
     obj.should.be(null)
-        .should.throwA!FluentException.message.should.equal("test failed: expected null, but got object.Object");
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected null, but got object.Object");
 
     obj.should.not.be(obj)
-        .should.throwA!FluentException.message.should.equal(
+        .should.throwA!FluentException
+            .where.its.msg.should.equal(
             "test failed: expected different reference than object.Object, but got object.Object");
 
     obj.should.be(new Object)
-        .should.throwA!FluentException.message.should.equal(
+        .should.throwA!FluentException
+        .where.its.msg.should.equal(
             "test failed: expected same reference as object.Object, but got object.Object");
 }
 
@@ -60,18 +85,22 @@ unittest
 unittest
 {
     2.should.be.greater.equal(5)
-        .should.throwA!FluentException.message.should.equal("test failed: expected value >= 5, but got 2");
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected value >= 5, but got 2");
 
     2.should.not.be.smaller.equal(5)
-        .should.throwA!FluentException.message.should.equal("test failed: expected value not <= 5, but got 2");
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected value not <= 5, but got 2");
 }
 
 @("prints informative errors for array emptiness")
 unittest
 {
     [].should.not.be.empty
-        .should.throwA!FluentException.message.should.equal("test failed: expected nonempty array");
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected nonempty array");
 
     [5].should.be.empty
-        .should.throwA!FluentException.message.should.equal("test failed: expected empty array, but got [5]");
+        .should.throwA!FluentException
+        .where.its.msg.should.equal("test failed: expected empty array, but got [5]");
 }

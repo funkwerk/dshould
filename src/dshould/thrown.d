@@ -2,6 +2,7 @@ module dshould.thrown;
 
 import std.format : format;
 import std.traits : CommonType;
+import std.typecons;
 import dshould.ShouldType;
 
 unittest
@@ -11,16 +12,18 @@ unittest
     auto error = new Exception("");
     void throwme() { throw error; }
 
-    throwme.should.throwAn!Exception.should.be(error);
-    throwme.should.throwAn!Exception.should.not.be(null);
+    throwme.should.throwAn!Exception.where.it.should.be(error);
+    throwme.should.throwAn!Exception.where.it.should.not.be(null);
 
     2.should.be(5).because("it just should, okay")
-        .should.throwA!FluentException.reason.should.equal("it just should, okay");
+        .should.throwA!FluentException.where.its.reason.should.equal("it just should, okay");
 
     2.should.be(5).should.throwA!FluentException;
     2.should.be(5).should.throwAn!Error.should.throwA!FluentException;
 
     2.should.be(2).should.not.throwA!FluentException;
+
+    2.should.be(5).should.throwA!FluentException("test");
 }
 
 template throwA(T : Throwable)
@@ -72,7 +75,7 @@ template throwA(T : Throwable)
             {
                 if (auto throwable = inner())
                 {
-                    return throwable;
+                    return tuple!"where"(tuple!("it", "its")(throwable, throwable));
                 }
             }
         }
