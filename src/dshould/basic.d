@@ -59,20 +59,57 @@ if (isInstanceOf!(ShouldType, Should))
 void be(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
+    import std.format : format;
+
     should.allowOnlyWordsBefore!(["not"], "be");
 
-    static if (Should.hasWord!"not")
+    enum isNullType = is(T == typeof(null));
+    // only types that can have toString need to disambiguate
+    enum isReferenceType = is(T == class) || is(T == interface);
+
+    with (should.addData!"rhs"(value))
     {
-        with (should.addData!"rhs"(value))
+        alias check = (condition, lazy msg)
         {
-            mixin(gencheck!("%s !is %s", ["lhs()", is(T == typeof(null)) ? "null" : "rhs"]));
+            terminateChain;
+
+            if (!condition)
+            {
+                throw new FluentException("test failed", msg, file, line);
+            }
+        };
+
+        static if (Should.hasWord!"not")
+        {
+            const refInfo = isReferenceType ? "different reference than " : "not ";
+
+            static if (isNullType)
+            {
+                check(data.lhs() !is null, format(": expected non-null, but got null"));
+            }
+            else
+            {
+                auto lhs = data.lhs();
+                auto rhs = data.rhs;
+
+                check(lhs !is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs));
+            }
         }
-    }
-    else
-    {
-        with (should.addData!"rhs"(value))
+        else
         {
-            mixin(gencheck!("%s is %s", ["lhs()", is(T == typeof(null)) ? "null" : "rhs"]));
+            const refInfo = isReferenceType ? "same reference as " : "";
+            auto lhs = data.lhs();
+            auto rhs = data.rhs;
+
+            static if (is(T == typeof(null)))
+            {
+                check(lhs is null, format(": expected null, but got %s", lhs));
+            }
+            else
+            {
+
+                check(lhs is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs));
+            }
         }
     }
 }
@@ -124,6 +161,8 @@ if (isInstanceOf!(ShouldType, Should))
 void numericCheck(Should)(Should should, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
+    import std.format : format;
+
     enum notPart = should.hasWord!"not" ? "!" : "";
     enum equalPart = should.hasWord!"equal" ? "==" : "";
     enum equalPartShort = should.hasWord!"equal" ? "=" : "";
@@ -146,15 +185,29 @@ if (isInstanceOf!(ShouldType, Should))
     static if (isFloating || !should.hasWord!"not")
     {
         enum check = "%s " ~ combined ~ " %s";
+        enum message = combined ~ " %s";
     }
     else
     {
         enum check = "!(%s " ~ combined ~ " %s)";
+        enum message = "not " ~ combined ~ " %s";
     }
 
     with (should)
     {
-        mixin(gencheck!(check, ["lhs()", "rhs"]));
+        terminateChain;
+
+        auto lhs = data.lhs();
+        auto rhs = data.rhs;
+
+        if (!mixin(format!check("lhs", "rhs")))
+        {
+            throw new FluentException(
+                "test failed",
+                format(": expected value %s, but got %s", message.format(rhs), lhs),
+                file, line
+            );
+        }
     }
 }
 
