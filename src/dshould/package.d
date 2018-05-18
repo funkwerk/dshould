@@ -46,6 +46,14 @@ unittest
 
     obj.should.be(null)
         .should.throwA!FluentException.message.should.equal("test failed: expected null, but got object.Object");
+
+    obj.should.not.be(obj)
+        .should.throwA!FluentException.message.should.equal(
+            "test failed: expected different reference than object.Object, but got object.Object");
+
+    obj.should.be(new Object)
+        .should.throwA!FluentException.message.should.equal(
+            "test failed: expected same reference as object.Object, but got object.Object");
 }
 
 @("prints informative errors for inequalities")
