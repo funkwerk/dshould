@@ -62,20 +62,21 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
         return format!q{{
             import std.format : format;
 
-            terminateChain;
-
             with (data)
             {
-                if (!mixin(format!q{%s}(%s)))
-                {
-                    throw new FluentException(
-                        "test failed",
-                        format(": %s", %s),
-                        file, line
-                    );
-                }
+                check(mixin(format!q{%s}(%s)), format(": %s", %s), file, line);
             }
         }}(testString, argStrings, testString, args);
+    }
+
+    public void check(bool condition, lazy string msg, string file, size_t line) pure @safe
+    {
+        terminateChain;
+
+        if (!condition)
+        {
+            throw new FluentException("test failed", msg, file, line);
+        }
     }
 
     public void allowOnlyWordsBefore(string[] AllowedWords, string NewWord)()
@@ -136,13 +137,17 @@ if (isInstanceOf!(ShouldType, Should))
 
     with (should)
     {
-        static if (Should.hasWord!"not")
+        terminateChain;
+
+        auto lhs = data.lhs();
+
+        static if (hasWord!"not")
         {
-            mixin(gencheck!("!%s.empty", ["lhs()"]));
+            check(!lhs.empty, `: expected nonempty array`, file, line);
         }
         else
         {
-            mixin(gencheck!("%s.empty", ["lhs()"]));
+            check(lhs.empty, format(": expected empty array, but got %s", lhs), file, line);
         }
     }
 }

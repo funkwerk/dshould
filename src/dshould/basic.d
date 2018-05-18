@@ -69,30 +69,20 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
     with (should.addData!"rhs"(value))
     {
-        alias check = (condition, lazy msg)
-        {
-            terminateChain;
-
-            if (!condition)
-            {
-                throw new FluentException("test failed", msg, file, line);
-            }
-        };
-
-        static if (Should.hasWord!"not")
+        static if (hasWord!"not")
         {
             const refInfo = isReferenceType ? "different reference than " : "not ";
 
             static if (isNullType)
             {
-                check(data.lhs() !is null, format(": expected non-null, but got null"));
+                check(data.lhs() !is null, format(": expected non-null, but got null"), file, line);
             }
             else
             {
                 auto lhs = data.lhs();
                 auto rhs = data.rhs;
 
-                check(lhs !is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs));
+                check(lhs !is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs), file, line);
             }
         }
         else
@@ -103,12 +93,12 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
             static if (is(T == typeof(null)))
             {
-                check(lhs is null, format(": expected null, but got %s", lhs));
+                check(lhs is null, format(": expected null, but got %s", lhs), file, line);
             }
             else
             {
 
-                check(lhs is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs));
+                check(lhs is rhs, format(": expected %s%s, but got %s", refInfo, rhs, lhs), file, line);
             }
         }
     }
@@ -184,30 +174,25 @@ if (isInstanceOf!(ShouldType, Should))
 
     static if (isFloating || !should.hasWord!"not")
     {
-        enum check = "%s " ~ combined ~ " %s";
+        enum checkString = "%s " ~ combined ~ " %s";
         enum message = combined ~ " %s";
     }
     else
     {
-        enum check = "!(%s " ~ combined ~ " %s)";
+        enum checkString = "!(%s " ~ combined ~ " %s)";
         enum message = "not " ~ combined ~ " %s";
     }
 
     with (should)
     {
-        terminateChain;
-
         auto lhs = data.lhs();
         auto rhs = data.rhs;
 
-        if (!mixin(format!check("lhs", "rhs")))
-        {
-            throw new FluentException(
-                "test failed",
-                format(": expected value %s, but got %s", message.format(rhs), lhs),
-                file, line
-            );
-        }
+        should.check(
+            mixin(format!checkString("lhs", "rhs")),
+            format(": expected value %s, but got %s", message.format(rhs), lhs),
+            file, line
+        );
     }
 }
 

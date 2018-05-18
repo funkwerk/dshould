@@ -53,14 +53,17 @@ unittest
 {
     2.should.be.greater.equal(5)
         .should.throwA!FluentException.message.should.equal("test failed: expected value >= 5, but got 2");
+
+    2.should.not.be.smaller.equal(5)
+        .should.throwA!FluentException.message.should.equal("test failed: expected value not <= 5, but got 2");
 }
 
 @("prints informative errors for array emptiness")
 unittest
 {
     [].should.not.be.empty
-        .should.throwA!FluentException.message.should.equal("test failed: ![].empty");
+        .should.throwA!FluentException.message.should.equal("test failed: expected nonempty array");
 
     [5].should.be.empty
-        .should.throwA!FluentException.message.should.equal("test failed: [5].empty");
+        .should.throwA!FluentException.message.should.equal("test failed: expected empty array, but got [5]");
 }
