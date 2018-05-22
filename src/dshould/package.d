@@ -43,6 +43,16 @@ template throwA(T : Throwable)
     }
 }
 
+alias throwAn = throwA;
+
+@("compares messages in throwA string overload")
+unittest
+{
+    2.should.be(5).because("string A")
+        .should.throwA!FluentException("string B")
+        .should.throwA!FluentException;
+}
+
 unittest
 {
     2.should.be(5).should.throwA!FluentException("test failed: expected 5, but got 2");
@@ -115,4 +125,17 @@ unittest
     (2.4).should.not.approximately(0.5).be(2)
         .should.throwA!FluentException
         .where.its.msg.should.equal("test failed: expected value outside 2 ± 0.5, but got 2.4");
+}
+
+@("asserts when forgetting to terminate should expression")
+unittest
+{
+    import core.exception : AssertError;
+
+    void test()
+    {
+        2.should;
+    }
+
+    test.should.throwAn!AssertError("unterminated should-chain!");
 }
