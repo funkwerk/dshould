@@ -35,6 +35,11 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
     @disable this();
 
     this(Data data, int* refs) @trusted
+    in
+    {
+        assert(*refs != CHAIN_TERMINATED, "don't copy Should that's been terminated");
+    }
+    body
     {
         this.data = data;
         this.refs = refs;
@@ -89,7 +94,7 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
     public void terminateChain()
     {
-        *this.refs = int.max; // terminate chain, safe ref checker
+        *this.refs = CHAIN_TERMINATED; // terminate chain, safe ref checker
     }
 
     public void requireWord(string RequiredWord, string NewWord)()
@@ -113,6 +118,11 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
     }
 
     private void addref()
+    in
+    {
+        assert(*this.refs != CHAIN_TERMINATED);
+    }
+    body
     {
         *this.refs = *this.refs + 1;
     }
@@ -124,6 +134,8 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
     public auto empty()() { return this.empty_; }
+
+    private enum CHAIN_TERMINATED = int.max;
 }
 
 // must be here due to https://issues.dlang.org/show_bug.cgi?id=18839
