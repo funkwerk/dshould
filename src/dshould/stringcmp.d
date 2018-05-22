@@ -55,39 +55,32 @@ if (isInstanceOf!(ShouldType, Should))
 @("collates successive replacements")
 unittest
 {
-    import unit_threaded.should;
-
     const expectedOriginal = "Hello W" ~ RED_CODE ~ "or" ~ CLEAR_CODE ~ "ld";
     const expectedTarget = "Hello W" ~ GREEN_CODE ~ "ey" ~ CLEAR_CODE ~ "ld";
     const diff = "Hello World".oneLineDiff("Hello Weyld");
 
-    (diff.original ~ diff.target).shouldEqual(expectedOriginal ~ expectedTarget);
+    (diff.original ~ diff.target).should.equal(expectedOriginal ~ expectedTarget);
 }
 
 @("does not colorize diff view for strings that are too different")
 unittest
 {
-    import unit_threaded.should;
-
     const diff = "Hello World".oneLineDiff("Goodbye Universe");
-    (diff.original ~ diff.target).shouldEqual("Hello WorldGoodbye Universe");
+    (diff.original ~ diff.target).should.equal("Hello WorldGoodbye Universe");
 }
 
 @("tries to not change diff mode too often")
 unittest
 {
-    import unit_threaded.should;
-
     const cleanDiff = `method="` ~ GREEN_CODE ~ `multiply` ~ CLEAR_CODE ~ `"`;
 
-    `method="update"`.oneLineDiff(`method="multiply"`).target.shouldEqual(cleanDiff);
+    `method="update"`.oneLineDiff(`method="multiply"`).target.should.equal(cleanDiff);
 }
 
 @("supports multiline diff")
 unittest
 {
     import std.string : join, split;
-    import unit_threaded.should;
 
     // given
     const originalText = `{
@@ -129,7 +122,7 @@ unittest
 
     const diff = originalText.split("\n").multiLineDiff(modifiedText.split("\n"));
 
-    (diff.original.join("\n") ~ diff.target.join("\n")).shouldEqual(patchTextOriginal ~ patchTextTarget);
+    (diff.original.join("\n") ~ diff.target.join("\n")).should.equal(patchTextOriginal ~ patchTextTarget);
 }
 
 auto oneLineDiff(string expected, string text) @safe

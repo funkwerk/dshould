@@ -164,7 +164,7 @@ if (isInstanceOf!(ShouldType, Should))
     }
 }
 
-class FluentException : Exception
+class FluentExceptionImpl(T : Exception) : T
 {
     private const string leftPart = null; // before reason
     public const string reason = null;
@@ -221,4 +221,15 @@ class FluentException : Exception
 
         return message;
     }
+}
+
+static if (__traits(compiles, { import unit_threaded.should : UnitTestException; }))
+{
+    import unit_threaded.should : UnitTestException;
+
+    alias FluentException = FluentExceptionImpl!UnitTestException;
+}
+else
+{
+    alias FluentException = FluentExceptionImpl!Exception;
 }
