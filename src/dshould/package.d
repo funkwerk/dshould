@@ -61,8 +61,7 @@ unittest
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected 3, but got 2");
+    2.should.be(3).should.throwA!FluentException("test failed: expected 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
@@ -71,23 +70,19 @@ unittest
     Object obj;
 
     obj.should.not.be(null)
-        .should.throwA!FluentException
-            .where.its.msg.should.equal("test failed: expected non-null, but got null");
+        .should.throwA!FluentException("test failed: expected non-null, but got null");
 
     obj = new Object;
 
     obj.should.be(null)
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected null, but got object.Object");
+        .should.throwA!FluentException("test failed: expected null, but got object.Object");
 
     obj.should.not.be(obj)
-        .should.throwA!FluentException
-            .where.its.msg.should.equal(
+        .should.throwA!FluentException(
             "test failed: expected different reference than object.Object, but got object.Object");
 
     obj.should.be(new Object)
-        .should.throwA!FluentException
-        .where.its.msg.should.equal(
+        .should.throwA!FluentException(
             "test failed: expected same reference as object.Object, but got object.Object");
 }
 
@@ -95,36 +90,30 @@ unittest
 unittest
 {
     2.should.be.greater.equal(5)
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected value >= 5, but got 2");
+        .should.throwA!FluentException("test failed: expected value >= 5, but got 2");
 
     2.should.not.be.smaller.equal(5)
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected value not <= 5, but got 2");
+        .should.throwA!FluentException("test failed: expected value not <= 5, but got 2");
 }
 
 @("prints informative errors for array emptiness")
 unittest
 {
     [].should.not.be.empty
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected nonempty array");
+        .should.throwA!FluentException("test failed: expected nonempty array");
 
     [5].should.be.empty
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected empty array, but got [5]");
+        .should.throwA!FluentException("test failed: expected empty array, but got [5]");
 }
 
 @("prints informative errors for approximate checks")
 unittest
 {
     2.should.approximately(0.5).be(4)
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected 4 ± 0.5, but got 2");
+        .should.throwA!FluentException("test failed: expected 4 ± 0.5, but got 2");
 
     (2.4).should.not.approximately(0.5).be(2)
-        .should.throwA!FluentException
-        .where.its.msg.should.equal("test failed: expected value outside 2 ± 0.5, but got 2.4");
+        .should.throwA!FluentException("test failed: expected value outside 2 ± 0.5, but got 2.4");
 }
 
 @("asserts when forgetting to terminate should expression")
