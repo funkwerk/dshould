@@ -296,10 +296,10 @@ private string quote(T)(T t)
 
     static if (is(T: string))
     {
-        return format!`'%s'`(t);
+        return format(`'%s'`, t);
     }
     else
     {
-        return format!`%s`(t);
+        return format(`%s`, t);
     }
 }
