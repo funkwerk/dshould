@@ -75,14 +75,14 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
             static if (isNullType)
             {
-                check(data.lhs() !is null, format(": expected non-null, but got null"), file, line);
+                check(data.lhs() !is null, ": expected non-null", ", but got null", file, line);
             }
             else
             {
                 auto lhs = data.lhs();
                 auto rhs = data.rhs;
 
-                check(lhs !is rhs, format(": expected %s%s, but got %s", refInfo, rhs.quote, lhs.quote), file, line);
+                check(lhs !is rhs, format(": expected %s%s", refInfo, rhs.quote), format(", but got %s", lhs.quote), file, line);
             }
         }
         else
@@ -93,12 +93,12 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
             static if (is(T == typeof(null)))
             {
-                check(lhs is null, format(": expected null, but got %s", lhs.quote), file, line);
+                check(lhs is null, ": expected null", format(", but got %s", lhs.quote), file, line);
             }
             else
             {
 
-                check(lhs is rhs, format(": expected %s%s, but got %s", refInfo, rhs.quote, lhs.quote), file, line);
+                check(lhs is rhs, format(": expected %s%s", refInfo, rhs.quote), format(", but got %s", lhs.quote), file, line);
             }
         }
     }
@@ -190,7 +190,8 @@ if (isInstanceOf!(ShouldType, Should))
 
         check(
             mixin(format!checkString("lhs", "rhs")),
-            format(": expected value %s, but got %s", message.format(rhs.quote), lhs.quote),
+            format(": expected value %s", message.format(rhs.quote)),
+            format(", but got %s", lhs.quote),
             file, line
         );
     }
@@ -275,7 +276,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 abs(lhs - rhs) >= data.permissibleError,
-                format(": expected value outside %s ± %s, but got %s", rhs, data.permissibleError, lhs),
+                format(": expected value outside %s ± %s", rhs, data.permissibleError),
+                format(", but got %s", lhs),
                 file, line
             );
         }
@@ -283,7 +285,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 abs(lhs - rhs) < data.permissibleError,
-                format(": expected %s ± %s, but got %s", rhs, data.permissibleError, lhs),
+                format(": expected %s ± %s", rhs, data.permissibleError),
+                format(", but got %s", lhs),
                 file, line
             );
         }

@@ -69,18 +69,18 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
             with (data)
             {
-                check(mixin(format!q{%s}(%s)), format(": %s", %s), file, line);
+                check(mixin(format!q{%s}(%s)), format(": expected %s", %s), null, file, line);
             }
         }}(testString, argStrings, testString, args);
     }
 
-    public void check(bool condition, lazy string msg, string file, size_t line) pure @safe
+    public void check(bool condition, lazy string left, lazy string right, string file, size_t line) pure @safe
     {
         terminateChain;
 
         if (!condition)
         {
-            throw new FluentException("test failed", msg, file, line);
+            throw new FluentException("test failed" ~ left, right, file, line);
         }
     }
 
@@ -155,11 +155,11 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (hasWord!"not")
         {
-            check(!lhs.empty, `: expected nonempty array`, file, line);
+            check(!lhs.empty, `: expected nonempty array`, null, file, line);
         }
         else
         {
-            check(lhs.empty, format(": expected empty array, but got %s", lhs), file, line);
+            check(lhs.empty, `: expected empty array`, format(", but got %s", lhs), file, line);
         }
     }
 }
