@@ -13,8 +13,7 @@ public auto should(T)(lazy T lhs) pure
     const delegate_ = { return lhs; };
 
     auto should = ShouldType!().init;
-    should.refs = new int;
-    *should.refs = 1;
+    should.refs = 1;
 
     return should.addData!"lhs"(delegate_);
 }
@@ -25,7 +24,7 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
     public Data data;
 
-    private int* refs = null;
+    private int* refs_ = null;
 
     public auto addWord(string Word)()
     {
@@ -34,27 +33,29 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
     @disable this();
 
-    this(Data data, int* refs) @trusted
+    this(Data data, ref int refs) @trusted
     in
     {
-        assert(*refs != CHAIN_TERMINATED, "don't copy Should that's been terminated");
+        assert(refs != CHAIN_TERMINATED, "don't copy Should that's been terminated");
     }
     body
     {
         this.data = data;
-        this.refs = refs;
-        addref;
+        this.refs_ = &refs;
+        this.refs++;
     }
 
     this(this) @trusted
     {
-        addref;
+        assert(this.refs != CHAIN_TERMINATED);
+
+        this.refs++;
     }
 
     ~this() @trusted
     {
-        delref;
-        assert(*this.refs > 0, "unterminated should-chain!");
+        this.refs--;
+        assert(this.refs > 0, "unterminated should-chain!");
     }
 
     public enum gencheck(string TestString, string[] ArgNames) = gencheckImpl(TestString, ArgNames);
@@ -94,7 +95,7 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
     public void terminateChain()
     {
-        *this.refs = CHAIN_TERMINATED; // terminate chain, safe ref checker
+        this.refs = CHAIN_TERMINATED; // terminate chain, safe ref checker
     }
 
     public void requireWord(string RequiredWord, string NewWord)()
@@ -117,25 +118,20 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
         }
     }
 
-    private void addref()
-    in
-    {
-        assert(*this.refs != CHAIN_TERMINATED);
-    }
-    body
-    {
-        *this.refs = *this.refs + 1;
-    }
-
-    private void delref()
-    {
-        *this.refs = *this.refs - 1;
-    }
-
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
     public auto empty()() { return this.empty_; }
 
     private enum CHAIN_TERMINATED = int.max;
+
+    private @property ref int refs()
+    {
+        if (this.refs_ is null)
+        {
+            this.refs_ = new int;
+            *this.refs_ = 0;
+        }
+        return *this.refs_;
+    }
 }
 
 // must be here due to https://issues.dlang.org/show_bug.cgi?id=18839
