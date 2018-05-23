@@ -8,39 +8,39 @@ import std.traits : TemplateArgsOf;
 public import std.traits : isInstanceOf;
 import std.typecons : Tuple;
 
-public auto should(T)(lazy T lhs) pure
+public auto should(T)(lazy T got) pure
 {
-    const delegate_ = { return lhs; };
+    T get() pure @safe
+    {
+        return got;
+    }
 
-    auto should = ShouldType!().init;
-    should.refs = 1;
-
-    return should.addData!"lhs"(delegate_);
+    return ShouldType!(typeof(&get))(&get);
 }
 
-public struct ShouldType(Data = Tuple!(), string[] Words = [])
+public struct ShouldType(G, string[] Words = [])
 {
     import std.algorithm : canFind;
 
-    public Data data;
+    public G got;
 
     private int* refs_ = null;
 
     public auto addWord(string Word)()
     {
-        return ShouldType!(Data, Words ~ Word)(this.data, this.refs);
+        return ShouldType!(G, Words ~ Word)(this.got, this.refs);
     }
 
-    @disable this();
+    private this(G got) { this.got = got; this.refs = 1; }
 
-    this(Data data, ref int refs) @trusted
+    public this(G got, ref int refs) @trusted
     in
     {
         assert(refs != CHAIN_TERMINATED, "don't copy Should that's been terminated");
     }
     body
     {
-        this.data = data;
+        this.got = got;
         this.refs_ = &refs;
         this.refs++;
     }
@@ -68,10 +68,7 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
         return format!q{{
             import std.format : format;
 
-            with (data)
-            {
-                check(mixin(format!q{%s}(%s)), format(": expected %s", %s), null, file, line);
-            }
+            check(mixin(format!q{%s}(%s)), format(": expected %s", %s), null, file, line);
         }}(testString, argStrings, testString, args);
     }
 
@@ -108,16 +105,6 @@ public struct ShouldType(Data = Tuple!(), string[] Words = [])
 
     public enum hasWord(string Word) = Words.canFind(Word);
 
-    public template addData(string Name)
-    {
-        auto addData(T)(T value)
-        {
-            alias NewTuple = Tuple!(TemplateArgsOf!Data, T, Name);
-
-            return ShouldType!(NewTuple, Words)(NewTuple(this.data.tupleof, value), this.refs);
-        }
-    }
-
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
     public auto empty()() { return this.empty_; }
 
@@ -140,22 +127,22 @@ if (isInstanceOf!(ShouldType, Should))
 {
     import std.range : empty;
 
-    should.allowOnlyWordsBefore!(["be", "not"], "empty");
-    should.requireWord!("be", "empty");
-
     with (should)
     {
+        allowOnlyWordsBefore!(["be", "not"], "empty");
+        requireWord!("be", "empty");
+
         terminateChain;
 
-        auto lhs = data.lhs();
+        auto got = should.got();
 
         static if (hasWord!"not")
         {
-            check(!lhs.empty, `: expected nonempty array`, null, file, line);
+            check(!got.empty, `: expected nonempty array`, null, file, line);
         }
         else
         {
-            check(lhs.empty, `: expected empty array`, format(", but got %s", lhs), file, line);
+            check(got.empty, `: expected empty array`, format(", but got %s", got), file, line);
         }
     }
 }

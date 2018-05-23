@@ -12,7 +12,7 @@ public import dshould.thrown;
 void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    static if (is(typeof(should.data.lhs()) == string) && is(T == string) && !Should.hasWord!"not")
+    static if (is(typeof(should.got()) == string) && is(T == string) && !Should.hasWord!"not")
     {
         dshould.stringcmp.equal(should, value, file, line);
     }
@@ -109,10 +109,10 @@ unittest
 @("prints informative errors for approximate checks")
 unittest
 {
-    2.should.approximately(0.5).be(4)
+    2.should.approximately.be(4, error=0.5)
         .should.throwA!FluentException("test failed: expected 4 ± 0.5, but got 2");
 
-    (2.4).should.not.approximately(0.5).be(2)
+    (2.4).should.not.approximately.be(2, error=0.5)
         .should.throwA!FluentException("test failed: expected value outside 2 ± 0.5, but got 2.4");
 }
 

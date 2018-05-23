@@ -56,49 +56,56 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"be";
 }
 
-void be(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void be(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
     import std.format : format;
 
-    should.allowOnlyWordsBefore!(["not"], "be");
-
-    enum isNullType = is(T == typeof(null));
-    // only types that can have toString need to disambiguate
-    enum isReferenceType = is(T == class) || is(T == interface);
-
-    with (should.addData!"rhs"(value))
+    with (should)
     {
+        allowOnlyWordsBefore!(["not"], "be");
+
+        enum isNullType = is(T == typeof(null));
+        // only types that can have toString need to disambiguate
+        enum isReferenceType = is(T == class) || is(T == interface);
+
+        auto got = should.got();
+
         static if (hasWord!"not")
         {
             const refInfo = isReferenceType ? "different reference than " : "not ";
 
             static if (isNullType)
             {
-                check(data.lhs() !is null, ": expected non-null", ", but got null", file, line);
+                check(got !is null, ": expected non-null", ", but got null", file, line);
             }
             else
             {
-                auto lhs = data.lhs();
-                auto rhs = data.rhs;
-
-                check(lhs !is rhs, format(": expected %s%s", refInfo, rhs.quote), format(", but got %s", lhs.quote), file, line);
+                check(
+                    got !is expected,
+                    format(": expected %s%s", refInfo, expected.quote),
+                    format(", but got %s", got.quote),
+                    file, line
+                );
             }
         }
         else
         {
             const refInfo = isReferenceType ? "same reference as " : "";
-            auto lhs = data.lhs();
-            auto rhs = data.rhs;
 
             static if (is(T == typeof(null)))
             {
-                check(lhs is null, ": expected null", format(", but got %s", lhs.quote), file, line);
+                check(got is null, ": expected null", format(", but got %s", got.quote), file, line);
             }
             else
             {
 
-                check(lhs is rhs, format(": expected %s%s", refInfo, rhs.quote), format(", but got %s", lhs.quote), file, line);
+                check(
+                    got is expected,
+                    format(": expected %s%s", refInfo, expected.quote),
+                    format(", but got %s", got.quote),
+                    file, line
+                );
             }
         }
     }
@@ -112,10 +119,10 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"equal";
 }
 
-void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
-    should.equal.addData!"rhs"(value).numericCheck(file, line);
+    should.equal.numericCheck(expected, file, line);
 }
 
 auto greater(Should)(Should should)
@@ -127,10 +134,10 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"greater";
 }
 
-void greater(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void greater(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.greater.addData!"rhs"(value).numericCheck(file, line);
+    should.greater.numericCheck(expected, file, line);
 }
 
 auto smaller(Should)(Should should)
@@ -142,56 +149,55 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"smaller";
 }
 
-void smaller(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void smaller(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.smaller.addData!"rhs"(value).numericCheck(file, line);
+    should.smaller.numericCheck(expected, file, line);
 }
 
-void numericCheck(Should)(Should should, string file, size_t line)
+void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.format : format;
 
-    enum notPart = should.hasWord!"not" ? "!" : "";
-    enum equalPart = should.hasWord!"equal" ? "==" : "";
-    enum equalPartShort = should.hasWord!"equal" ? "=" : "";
-    enum smallerPart = should.hasWord!"smaller" ? "<" : "";
-    enum greaterPart = should.hasWord!"greater" ? ">" : "";
-
-    enum isFloating = __traits(isFloating, typeof(should.data.lhs()));
-
-    static if (isFloating)
-    {
-        enum combinedWithoutEqual = notPart ~ smallerPart ~ greaterPart;
-    }
-    else
-    {
-        enum combinedWithoutEqual = smallerPart ~ greaterPart;
-    }
-
-    enum combined = combinedWithoutEqual ~ (combinedWithoutEqual.empty ? equalPart : equalPartShort);
-
-    static if (isFloating || !should.hasWord!"not")
-    {
-        enum checkString = "%s " ~ combined ~ " %s";
-        enum message = combined ~ " %s";
-    }
-    else
-    {
-        enum checkString = "!(%s " ~ combined ~ " %s)";
-        enum message = "not " ~ combined ~ " %s";
-    }
-
     with (should)
     {
-        auto lhs = data.lhs();
-        auto rhs = data.rhs;
+        enum notPart = hasWord!"not" ? "!" : "";
+        enum equalPart = hasWord!"equal" ? "==" : "";
+        enum equalPartShort = hasWord!"equal" ? "=" : "";
+        enum smallerPart = hasWord!"smaller" ? "<" : "";
+        enum greaterPart = hasWord!"greater" ? ">" : "";
+
+        auto got = should.got();
+
+        enum isFloating = __traits(isFloating, typeof(got));
+
+        static if (isFloating)
+        {
+            enum combinedWithoutEqual = notPart ~ smallerPart ~ greaterPart;
+        }
+        else
+        {
+            enum combinedWithoutEqual = smallerPart ~ greaterPart;
+        }
+
+        enum combined = combinedWithoutEqual ~ (combinedWithoutEqual.empty ? equalPart : equalPartShort);
+
+        static if (isFloating || !should.hasWord!"not")
+        {
+            enum checkString = "%s " ~ combined ~ " %s";
+            enum message = combined ~ " %s";
+        }
+        else
+        {
+            enum checkString = "!(%s " ~ combined ~ " %s)";
+            enum message = "not " ~ combined ~ " %s";
+        }
 
         check(
-            mixin(format!checkString("lhs", "rhs")),
-            format(": expected value %s", message.format(rhs.quote)),
-            format(", but got %s", lhs.quote),
+            mixin(format!checkString("got", "expected")),
+            format(": expected value %s", message.format(expected.quote)),
+            format(", but got %s", got.quote),
             file, line
         );
     }
@@ -204,22 +210,39 @@ if (isInstanceOf!(ShouldType, Should))
  */
 unittest
 {
-    5.should.be.approximately(5.1, 0.11);
-    5.should.approximately(0.11).be(5.1);
-    0.should.approximately(1.1).equal(1.0);
-    0.should.approximately(1.1).equal(-1.0);
-    0.should.not.approximately(0.1).equal(1);
-    42.3.should.be.approximately(42.3, 1e-3);
+    5.should.be.approximately(5.1, error = 0.11);
+    5.should.approximately.be(5.1, error = 0.11);
+    0.should.approximately.equal(1.0, error = 1.1);
+    0.should.approximately.equal(-1.0, error = 1.1);
+    0.should.not.approximately.equal(1, error = 0.1);
+    42.3.should.be.approximately(42.3, error = 1e-3);
 }
 
-auto approximately(Should)(Should should, double permissibleError)
+struct ErrorValue
+{
+    @disable this();
+
+    private this(double value)
+    {
+        this.value = value;
+    }
+
+    double value;
+}
+
+public auto error(double value)
+{
+    return ErrorValue(value);
+}
+
+auto approximately(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    return should.addWord!"approximately".addData!"permissibleError"(permissibleError);
+    return should.addWord!"approximately";
 }
 
 auto approximately(Should)(
-    Should should, double value, double permissibleError,
+    Should should, double expected, ErrorValue error,
     string file = __FILE__, size_t line = __LINE__
 )
 if (isInstanceOf!(ShouldType, Should))
@@ -233,12 +256,10 @@ if (isInstanceOf!(ShouldType, Should))
 
     return should
         .addWord!"approximately"
-        .addData!"permissibleError"(permissibleError)
-        .addData!"rhs"(value)
-        .approximateCheck(file, line);
+        .approximateCheck(expected, error, file, line);
 }
 
-void be(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void be(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     import std.traits : isDynamicArray;
@@ -250,18 +271,18 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 
     should.allowOnlyWordsBefore!(["approximately", "not"], "equal");
 
-    return should.addData!"rhs"(value).approximateCheck(file, line);
+    return should.approximateCheck(expected, error, file, line);
 }
 
-void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void equal(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     should.allowOnlyWordsBefore!(["approximately", "not"], "be");
 
-    return should.addData!"rhs"(value).approximateCheck(file, line);
+    return should.approximateCheck(expected, error, file, line);
 }
 
-void approximateCheck(Should)(Should should, string file, size_t line)
+void approximateCheck(Should, T)(Should should, T expected, ErrorValue error, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.format : format;
@@ -269,24 +290,23 @@ if (isInstanceOf!(ShouldType, Should))
 
     with (should)
     {
-        auto lhs = data.lhs();
-        auto rhs = data.rhs;
+        auto got = should.got();
 
         static if (hasWord!"not")
         {
             check(
-                abs(lhs - rhs) >= data.permissibleError,
-                format(": expected value outside %s ± %s", rhs, data.permissibleError),
-                format(", but got %s", lhs),
+                abs(expected - got) >= error.value,
+                format(": expected value outside %s ± %s", expected, error.value),
+                format(", but got %s", got),
                 file, line
             );
         }
         else
         {
             check(
-                abs(lhs - rhs) < data.permissibleError,
-                format(": expected %s ± %s", rhs, data.permissibleError),
-                format(", but got %s", lhs),
+                abs(expected - got) < error.value,
+                format(": expected %s ± %s", expected, error.value),
+                format(", but got %s", got),
                 file, line
             );
         }

@@ -7,48 +7,50 @@ import std.typecons;
 import dshould.ShouldType;
 import dshould.basic;
 
-void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && is(T == string))
 {
     should.allowOnlyWordsBefore!([], "equal (string)");
 
-    should.addWord!"equal".addData!"rhs"(value).stringCmp(file, line);
+    should.addWord!"equal".stringCmp(expected, file, line);
 }
 
-void stringCmp(Should)(Should should, string file, size_t line)
+void stringCmp(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
+    import std.algorithm : canFind;
+
     should.allowOnlyWordsBefore!(["equal"], "");
 
-    with (should)
+    should.terminateChain;
+
+    auto got = should.got();
+
+    if (got != expected)
     {
-        terminateChain;
-        if (data.lhs() != data.rhs)
+        string original;
+        string diff;
+
+        if (got.canFind("\n"))
         {
-            string original;
-            string diff;
+            auto diffPair = multiLineDiff(expected.split("\n"), got.split("\n"));
 
-            if (data.lhs().canFind("\n"))
-            {
-                auto diffPair = multiLineDiff(data.rhs.split("\n"), data.lhs().split("\n"));
-
-                original = diffPair.original.join("\n") ~ "\n";
-                diff = "\n" ~ diffPair.target.join("\n");
-            }
-            else
-            {
-                auto diffPair = oneLineDiff(data.rhs, data.lhs());
-
-                original = diffPair.original;
-                diff = diffPair.target;
-            }
-
-            throw new FluentException(
-                "test failed",
-                format!`: expected '%s', but got '%s'`(original, diff),
-                file, line
-            );
+            original = diffPair.original.join("\n") ~ "\n";
+            diff = "\n" ~ diffPair.target.join("\n");
         }
+        else
+        {
+            auto diffPair = oneLineDiff(expected, got);
+
+            original = diffPair.original;
+            diff = diffPair.target;
+        }
+
+        throw new FluentException(
+            "test failed",
+            format!`: expected '%s', but got '%s'`(original, diff),
+            file, line
+        );
     }
 }
 

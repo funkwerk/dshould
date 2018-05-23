@@ -45,7 +45,7 @@ template throwA(T : Throwable)
         {
             try
             {
-                should.data.lhs();
+                should.got();
             }
             catch (T throwable)
             {

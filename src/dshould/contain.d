@@ -23,12 +23,12 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"only";
 }
 
-void contain(Should, T)(Should should, T set, string file = __FILE__, size_t line = __LINE__)
+void contain(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWordsBefore!(["not", "only"], "contain");
 
-    should.addWord!"contain".addData!"rhs"(set).checkContain(file, line);
+    should.addWord!"contain".checkContain(expected, file, line);
 }
 
 auto contain(Should)(Should should)
@@ -39,16 +39,16 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"contain";
 }
 
-void only(Should, T)(Should should, T set, string file = __FILE__, size_t line = __LINE__)
+void only(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!("contain", "only");
     should.allowOnlyWordsBefore!(["not", "contain"], "only");
 
-    should.addWord!"only".addData!"rhs"(set).checkContain(file, line);
+    should.addWord!"only".checkContain(expected, file, line);
 }
 
-void checkContain(Should)(Should should, string file, size_t line)
+void checkContain(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.algorithm : any, all, canFind;
@@ -56,56 +56,57 @@ if (isInstanceOf!(ShouldType, Should))
 
     with (should)
     {
-        auto lhsValue = data.lhs();
-        enum rhsIsValue = is(typeof(data.rhs) == ElementType!(typeof(lhsValue)));
+        auto got = should.got();
+
+        enum rhsIsValue = is(T == ElementType!(typeof(got)));
 
         static if (rhsIsValue)
         {
-            static if (Should.hasWord!"only")
+            static if (hasWord!"only")
             {
-                static if (Should.hasWord!"not")
+                static if (hasWord!"not")
                 {
-                    mixin(gencheck!("%s.any!(a => a != %s)", ["lhsValue", "rhs"]));
+                    mixin(gencheck!("%s.any!(a => a != %s)", ["got", "expected"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.all!(a => a == %s)", ["lhsValue", "rhs"]));
+                    mixin(gencheck!("%s.all!(a => a == %s)", ["got", "expected"]));
                 }
             }
             else
             {
-                static if (Should.hasWord!"not")
+                static if (hasWord!"not")
                 {
-                    mixin(gencheck!("!%s.canFind(%s)", ["lhsValue", "rhs"]));
+                    mixin(gencheck!("!%s.canFind(%s)", ["got", "expected"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.canFind(%s)", ["lhsValue", "rhs"]));
+                    mixin(gencheck!("%s.canFind(%s)", ["got", "expected"]));
                 }
             }
         }
         else
         {
-            static if (Should.hasWord!"only")
+            static if (hasWord!"only")
             {
-                static if (Should.hasWord!"not")
+                static if (hasWord!"not")
                 {
-                    mixin(gencheck!("%s.any!(a => !%s.canFind(a))", ["lhsValue", "rhs"]));
+                    mixin(gencheck!("%s.any!(a => !%s.canFind(a))", ["got", "expected"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.all!(a => %s.canFind(a))", ["lhsValue", "rhs"]));
+                    mixin(gencheck!("%s.all!(a => %s.canFind(a))", ["got", "expected"]));
                 }
             }
             else
             {
-                static if (Should.hasWord!"not")
+                static if (hasWord!"not")
                 {
-                    mixin(gencheck!("%s.all!(a => !%s.canFind(a))", ["rhs", "lhsValue"]));
+                    mixin(gencheck!("%s.all!(a => !%s.canFind(a))", ["expected", "got"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.all!(a => %s.canFind(a))", ["rhs", "lhsValue"]));
+                    mixin(gencheck!("%s.all!(a => %s.canFind(a))", ["expected", "got"]));
                 }
             }
         }
