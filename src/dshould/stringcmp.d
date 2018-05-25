@@ -57,8 +57,8 @@ if (isInstanceOf!(ShouldType, Should))
 @("collates successive replacements")
 unittest
 {
-    const expectedOriginal = "Hello W" ~ RED_CODE ~ "or" ~ CLEAR_CODE ~ "ld";
-    const expectedTarget = "Hello W" ~ GREEN_CODE ~ "ey" ~ CLEAR_CODE ~ "ld";
+    const expectedOriginal = "Hello W" ~ red("or") ~ "ld";
+    const expectedTarget = "Hello W" ~ green("ey") ~ "ld";
     const diff = "Hello World".oneLineDiff("Hello Weyld");
 
     (diff.original ~ diff.target).should.equal(expectedOriginal ~ expectedTarget);
@@ -68,6 +68,7 @@ unittest
 unittest
 {
     const diff = "Hello World".oneLineDiff("Goodbye Universe");
+
     (diff.original ~ diff.target).should.equal("Hello WorldGoodbye Universe");
 }
 
@@ -86,40 +87,37 @@ unittest
 
     // given
     const originalText = `{
-        "id": 1,
-        "speakers": ["KK__LK02"],
-        "startTime": "2003-02-01T12:00:00Z",
-        "stopTime": "2003-02-01T14:00:00Z",
-        "route": "ROUTE",
-        "phraseId": 42
+        "int": 1,
+        "array": ["XX"],
+        "timecodeBegin": "2003-02-01T12:00:00Z",
+        "timecodeEnd": "2003-02-01T14:00:00Z",
+        "enum": "ENUM",
+        "lastEntry": "goodbye"
     }`;
     const modifiedText = `{
-        "id": 1,
-        "speakers": ["KK__LK02"],
-        "route": "ROUTE",
+        "int": 1,
+        "array": ["XX"],
+        "enum": "ENUM",
         "somethingElse": "goes here",
-        "phraseId": 42
+        "lastEntry": "goodbye"
     }`;
 
     // then
-    const MINUS = RED_CODE ~ `-`;
-    const PLUS = GREEN_CODE ~ `+`;
-
     const patchTextOriginal = ` {
-         "id": 1,
-         "speakers": ["KK__LK02"],
-` ~ MINUS ~ `        "startTime": "2003-02-01T12:00:00Z",` ~ CLEAR_CODE ~ `
-` ~ MINUS ~ `        "stopTime": "2003-02-01T14:00:00Z",` ~ CLEAR_CODE ~ `
-         "route": "ROUTE",
-         "phraseId": 42
+         "int": 1,
+         "array": ["XX"],
+` ~ red(`-        "timecodeBegin": "2003-02-01T12:00:00Z",`) ~ `
+` ~ red(`-        "timecodeEnd": "2003-02-01T14:00:00Z",`) ~ `
+         "enum": "ENUM",
+         "lastEntry": "goodbye"
      }`;
 
     const patchTextTarget = ` {
-         "id": 1,
-         "speakers": ["KK__LK02"],
-         "route": "ROUTE",
-` ~ PLUS ~ `        "somethingElse": "goes here",` ~ CLEAR_CODE ~ `
-         "phraseId": 42
+         "int": 1,
+         "array": ["XX"],
+         "enum": "ENUM",
+` ~ green(`+        "somethingElse": "goes here",`) ~ `
+         "lastEntry": "goodbye"
      }`;
 
     const diff = originalText.split("\n").multiLineDiff(modifiedText.split("\n"));
@@ -129,8 +127,8 @@ unittest
 
 auto oneLineDiff(string expected, string text) @safe
 {
-    alias removePred = text => RED_CODE ~ text ~ CLEAR_CODE;
-    alias addPred = text => GREEN_CODE ~ text ~ CLEAR_CODE;
+    alias removePred = text => red(text);
+    alias addPred = text => green(text);
     alias keepPred = text => text;
     alias ditchPred = lines => string.init;
 
@@ -151,8 +149,8 @@ auto oneLineDiff(string expected, string text) @safe
 
 auto multiLineDiff(string[] expected, string[] text) @safe
 {
-    alias removePred = lines => lines.map!(line => RED_CODE ~ "-" ~ line ~ CLEAR_CODE);
-    alias addPred = lines => lines.map!(line => GREEN_CODE ~ "+" ~ line ~ CLEAR_CODE);
+    alias removePred = lines => lines.map!(line => red("-" ~ line));
+    alias addPred = lines => lines.map!(line => green("+" ~ line));
     alias keepPred = lines => lines.map!(line => " " ~ line);
     alias ditchPred = lines => (string[]).init;
 
@@ -265,10 +263,29 @@ Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T e
     return diff.data.nullable;
 }
 
-enum RED_CODE = "\x1b[31m";
-enum GREEN_CODE = "\x1b[32m";
-enum CLEAR_CODE = "\x1b[39m";
+private auto red(T)(T text)
+{
+    return RED_CODE ~ text ~ CLEAR_CODE;
+}
 
+private auto green(T)(T text)
+{
+    return GREEN_CODE ~ text ~ CLEAR_CODE;
+}
+
+private enum RED_CODE = "\x1b[31m";
+private enum GREEN_CODE = "\x1b[32m";
+private enum CLEAR_CODE = "\x1b[39m";
+
+/**
+ * Modified Levenshtein distance from from std.algorithm
+ * Given two ranges, returns a sequence of insertions and deletions
+ * that turn the first range into the second.
+ * This is equivalent to diff computation, though it's
+ * comparatively inefficient at O(n^2) memory and runtime.
+ *
+ * This version adds customizable path cost, used to implement orphan avoidance.
+ */
 private struct Levenshtein(Range)
 {
     @disable this();
@@ -334,7 +351,7 @@ private struct Levenshtein(Range)
     {
         assert(i > 0 || j > 0);
     }
-    body
+    do
     {
         final switch (op)
         {
@@ -419,7 +436,7 @@ private struct Levenshtein(Range)
         assert(row >= 0 && row < this.rows);
         assert(col >= 0 && col < this.cols);
     }
-    body
+    do
     {
         return this.matrixData[row * this.cols + col];
     }

@@ -9,25 +9,20 @@ unittest
 {
     import dshould.basic : be, equal, not, should;
 
-    auto error = new Exception("");
+    auto exception = new Exception("");
 
     /**
      * Throws: Exception
      */
-    void throwsException() { throw error; }
+    void throwsException() { throw exception; }
 
-    throwsException.should.throwAn!Exception.where.it.should.be(error);
-    throwsException.should.throwAn!Exception.where.it.should.not.be(null);
-
-    2.should.be(5).because("it just should, okay")
-        .should.throwA!FluentException.where.its.reason.should.equal("it just should, okay");
+    throwsException.should.throwAn!Exception.which.should.be(exception);
+    throwsException.should.throwAn!Exception.which.should.not.be(null);
 
     2.should.be(5).should.throwA!FluentException;
     2.should.be(5).should.throwAn!Error.should.throwA!FluentException;
 
     2.should.be(2).should.not.throwA!FluentException;
-
-    2.should.be(5).should.throwA!FluentException("test");
 }
 
 template throwA(T : Throwable)
@@ -79,7 +74,7 @@ template throwA(T : Throwable)
             {
                 if (auto throwable = inner())
                 {
-                    return tuple!"where"(tuple!("it", "its")(throwable, throwable));
+                    return tuple!("where", "which")(throwable, throwable);
                 }
             }
         }
@@ -120,15 +115,3 @@ template throwA(T : Throwable)
 }
 
 alias throwAn = throwA;
-
-T because(T)(lazy T value, string reason)
-{
-    try
-    {
-        return value;
-    }
-    catch (FluentException fluentException)
-    {
-        throw fluentException.because(reason);
-    }
-}

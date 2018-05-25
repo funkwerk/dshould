@@ -33,7 +33,7 @@ template throwA(T : Throwable)
     void throwA(Should, string file = __FILE__)(Should should, string msgTest, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
     {
-        dshould.thrown.throwA!T(should, file, line).where.its.msg.should.equal(msgTest, file, line);
+        dshould.thrown.throwA!T(should, file, line).where.msg.should.equal(msgTest, file, line);
     }
 
     auto throwA(Should, string file = __FILE__)(Should should, size_t line = __LINE__)
@@ -45,17 +45,19 @@ template throwA(T : Throwable)
 
 alias throwAn = throwA;
 
+@("because defines reason for assertion")
+unittest
+{
+    2.should.be(5).because("string A")
+        .should.throwA!FluentException.where.reason.should.equal("string A");
+}
+
 @("compares messages in throwA string overload")
 unittest
 {
     2.should.be(5).because("string A")
         .should.throwA!FluentException("string B")
         .should.throwA!FluentException;
-}
-
-unittest
-{
-    2.should.be(5).should.throwA!FluentException("test failed: expected 5, but got 2");
 }
 
 @("prints informative errors for int comparison")
@@ -96,14 +98,14 @@ unittest
         .should.throwA!FluentException("test failed: expected value not <= 5, but got 2");
 }
 
-@("prints informative errors for array emptiness")
+@("prints informative errors for range emptiness")
 unittest
 {
     [].should.not.be.empty
-        .should.throwA!FluentException("test failed: expected nonempty array");
+        .should.throwA!FluentException("test failed: expected nonempty range");
 
     [5].should.be.empty
-        .should.throwA!FluentException("test failed: expected empty array, but got [5]");
+        .should.throwA!FluentException("test failed: expected empty range, but got [5]");
 }
 
 @("prints informative errors for approximate checks")

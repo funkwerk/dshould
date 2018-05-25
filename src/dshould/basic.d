@@ -10,10 +10,10 @@ pure @safe unittest
     2.should.not.be(5);
     5.should.equal(5);
     5.should.not.equal(6);
-    5.should.not.be.equal.greater(6);
-    5.should.be.equal.greater(5);
-    5.should.be.equal.greater(4);
-    5.should.not.be.equal.greater(6);
+    5.should.not.be.greater.equal(6);
+    5.should.be.greater.equal(5);
+    5.should.be.greater.equal(4);
+    5.should.not.be.greater.equal(6);
     5.should.be.smaller(6);
 }
 
@@ -128,7 +128,7 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 auto greater(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "equal", "smaller"], "greater");
+    should.allowOnlyWordsBefore!(["not", "be", "equal"], "greater");
     should.requireWord!("be", "greater");
 
     return should.addWord!"greater";
@@ -143,7 +143,7 @@ if (isInstanceOf!(ShouldType, Should))
 auto smaller(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "equal", "greater"], "smaller");
+    should.allowOnlyWordsBefore!(["not", "be", "equal"], "smaller");
     should.requireWord!("be", "smaller");
 
     return should.addWord!"smaller";
@@ -170,28 +170,19 @@ if (isInstanceOf!(ShouldType, Should))
 
         auto got = should.got();
 
-        enum isFloating = __traits(isFloating, typeof(got));
+        enum comparison = smallerPart ~ greaterPart;
 
-        static if (isFloating)
-        {
-            enum combinedWithoutEqual = notPart ~ smallerPart ~ greaterPart;
-        }
-        else
-        {
-            enum combinedWithoutEqual = smallerPart ~ greaterPart;
-        }
+        enum combined = comparison ~ (comparison.empty ? equalPart : equalPartShort);
 
-        enum combined = combinedWithoutEqual ~ (combinedWithoutEqual.empty ? equalPart : equalPartShort);
-
-        static if (isFloating || !should.hasWord!"not")
-        {
-            enum checkString = "%s " ~ combined ~ " %s";
-            enum message = combined ~ " %s";
-        }
-        else
+        static if (should.hasWord!"not")
         {
             enum checkString = "!(%s " ~ combined ~ " %s)";
             enum message = "not " ~ combined ~ " %s";
+        }
+        else
+        {
+            enum checkString = "%s " ~ combined ~ " %s";
+            enum message = combined ~ " %s";
         }
 
         check(
@@ -319,10 +310,10 @@ private string quote(T)(T t)
 
     static if (is(T: string))
     {
-        return format(`'%s'`, t);
+        return format("'%s'", t);
     }
     else
     {
-        return format(`%s`, t);
+        return format("%s", t);
     }
 }

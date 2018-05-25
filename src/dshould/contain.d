@@ -6,9 +6,12 @@ unittest
 {
     import dshould.basic : not, should;
 
-    [2, 3, 4].should.contain([3]);
-    [2, 3, 4].should.contain([4, 3]);
-    [2, 3, 4].should.not.contain([5]);
+    [2, 3, 4].should.contain.all([3]);
+    [2, 3, 4].should.contain(3);
+    [2, 3, 4].should.contain.all([4, 3]);
+    [2, 3, 4].should.not.contain.any([5, 6]);
+    [2, 3, 4].should.not.contain(5);
+    [2, 3, 4].should.not.contain.all([3, 4, 5]);
     [3, 4].should.only.contain([4, 3]);
     [3, 4].should.only.contain([1, 2, 3, 4]);
     [3, 4].should.contain.only([4, 3]);
@@ -39,6 +42,24 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"contain";
 }
 
+void all(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    should.requireWord!("contain", "all");
+    should.allowOnlyWordsBefore!(["not", "contain"], "all");
+
+    should.addWord!"all".checkContain(expected, file, line);
+}
+
+void any(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    should.requireWord!("contain", "any");
+    should.allowOnlyWordsBefore!(["not", "contain"], "any");
+
+    should.addWord!"any".checkContain(expected, file, line);
+}
+
 void only(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -62,26 +83,28 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (rhsIsValue)
         {
+            allowOnlyWordsBefore!(["not", "only", "contain"], "contain");
+
             static if (hasWord!"only")
             {
                 static if (hasWord!"not")
                 {
-                    mixin(gencheck!("%s.any!(a => a != %s)", ["got", "expected"]));
+                    mixin(genCheck!("%s.any!(a => a != %s)", ["got", "expected"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.all!(a => a == %s)", ["got", "expected"]));
+                    mixin(genCheck!("%s.all!(a => a == %s)", ["got", "expected"]));
                 }
             }
             else
             {
                 static if (hasWord!"not")
                 {
-                    mixin(gencheck!("!%s.canFind(%s)", ["got", "expected"]));
+                    mixin(genCheck!("!%s.canFind(%s)", ["got", "expected"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.canFind(%s)", ["got", "expected"]));
+                    mixin(genCheck!("%s.canFind(%s)", ["got", "expected"]));
                 }
             }
         }
@@ -91,23 +114,39 @@ if (isInstanceOf!(ShouldType, Should))
             {
                 static if (hasWord!"not")
                 {
-                    mixin(gencheck!("%s.any!(a => !%s.canFind(a))", ["got", "expected"]));
+                    mixin(genCheck!("!%s.all!(a => %s.canFind(a))", ["got", "expected"]));
                 }
                 else
                 {
-                    mixin(gencheck!("%s.all!(a => %s.canFind(a))", ["got", "expected"]));
+                    mixin(genCheck!("%s.all!(a => %s.canFind(a))", ["got", "expected"]));
+                }
+            }
+            else static if (hasWord!"all")
+            {
+                static if (hasWord!"not")
+                {
+                    mixin(genCheck!("!%s.all!(a => %s.canFind(a))", ["expected", "got"]));
+                }
+                else
+                {
+                    mixin(genCheck!("%s.all!(a => %s.canFind(a))", ["expected", "got"]));
+                }
+            }
+            else static if (hasWord!"any")
+            {
+                static if (hasWord!"not")
+                {
+                    mixin(genCheck!("!%s.any!(a => %s.canFind(a))", ["expected", "got"]));
+                }
+                else
+                {
+                    mixin(genCheck!("%s.any!(a => %s.canFind(a))", ["expected", "got"]));
                 }
             }
             else
             {
-                static if (hasWord!"not")
-                {
-                    mixin(gencheck!("%s.all!(a => !%s.canFind(a))", ["expected", "got"]));
-                }
-                else
-                {
-                    mixin(gencheck!("%s.all!(a => %s.canFind(a))", ["expected", "got"]));
-                }
+                static assert(false,
+                    `bad grammar: expected "all", "any" or "only" before "contain"`);
             }
         }
     }

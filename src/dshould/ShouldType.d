@@ -18,52 +18,55 @@ public auto should(T)(lazy T got) pure
     return ShouldType!(typeof(&get))(&get);
 }
 
-public struct ShouldType(G, string[] words = [])
+public struct ShouldType(G, string[] phrase = [])
 {
     import std.algorithm : canFind;
 
     public G got;
 
-    private int* refs_ = null;
+    private int* refCount_ = null;
 
     public auto addWord(string word)()
     {
-        return ShouldType!(G, words ~ word)(this.got, this.refs);
+        return ShouldType!(G, phrase ~ word)(this.got, this.refCount);
     }
 
-    private this(G got) { this.got = got; this.refs = 1; }
+    private this(G got) { this.got = got; this.refCount = 1; }
 
-    public this(G got, ref int refs) @trusted
+    public this(G got, ref int refCount) @trusted
     in
     {
-        assert(refs != CHAIN_TERMINATED, "don't copy Should that's been terminated");
+        assert(refCount != CHAIN_TERMINATED, "don't copy Should that's been terminated");
     }
-    body
+    do
     {
         this.got = got;
-        this.refs_ = &refs;
-        this.refs++;
+        this.refCount_ = &refCount;
+        this.refCount++;
     }
 
     this(this) @trusted
+    in
     {
-        assert(this.refs != CHAIN_TERMINATED);
-
-        this.refs++;
+        assert(this.refCount != CHAIN_TERMINATED);
+    }
+    do
+    {
+        this.refCount++;
     }
 
     ~this() @trusted
     {
-        this.refs--;
-        assert(this.refs > 0, "unterminated should-chain!");
+        this.refCount--;
+        assert(this.refCount > 0, "unterminated should-chain!");
     }
 
-    public enum gencheck(string TestString, string[] ArgNames) = gencheckImpl(TestString, ArgNames);
+    public enum genCheck(string TestString, string[] ArgNames) = genCheckImpl(TestString, ArgNames);
 
-    private static string gencheckImpl(string testString, string[] argNames)
+    private static string genCheckImpl(string testString, string[] argNames)
     {
-        auto args = argNames.join(", ");
-        auto argStrings = argNames.length.iota.map!(i => format!`"%s"`(argNames[i])).join(", ");
+        auto args = format!"%-(%s, %)"(argNames);
+        auto argStrings = format!"%(%s, %)"(argNames);
 
         return format!q{{
             import std.format : format;
@@ -84,7 +87,7 @@ public struct ShouldType(G, string[] words = [])
 
     public void allowOnlyWordsBefore(string[] allowedWords, string newWord)()
     {
-        static foreach (word; words)
+        static foreach (word; phrase)
         {
             static assert(allowedWords.canFind(word), `bad grammar: "` ~ word ~ ` ` ~ newWord ~ `"`);
         }
@@ -92,32 +95,32 @@ public struct ShouldType(G, string[] words = [])
 
     public void terminateChain()
     {
-        this.refs = CHAIN_TERMINATED; // terminate chain, safe ref checker
+        this.refCount = CHAIN_TERMINATED; // terminate chain, safe ref checker
     }
 
     public void requireWord(string requiredWord, string newWord)()
     {
         static assert(
-            words.canFind(requiredWord),
+            hasWord!requiredWord,
             `bad grammar: expected "` ~ requiredWord ~ `" before "` ~ newWord ~ `"`
         );
     }
 
-    public enum hasWord(string word) = words.canFind(word);
+    public enum hasWord(string word) = phrase.canFind(word);
 
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
     public auto empty()() { return this.empty_; }
 
     private enum CHAIN_TERMINATED = int.max;
 
-    private @property ref int refs()
+    private @property ref int refCount()
     {
-        if (this.refs_ is null)
+        if (this.refCount_ is null)
         {
-            this.refs_ = new int;
-            *this.refs_ = 0;
+            this.refCount_ = new int;
+            *this.refCount_ = 0;
         }
-        return *this.refs_;
+        return *this.refCount_;
     }
 }
 
@@ -138,11 +141,11 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (hasWord!"not")
         {
-            check(!got.empty, `: expected nonempty array`, null, file, line);
+            check(!got.empty, `: expected nonempty range`, null, file, line);
         }
         else
         {
-            check(got.empty, `: expected empty array`, format(", but got %s", got), file, line);
+            check(got.empty, `: expected empty range`, format(", but got %s", got), file, line);
         }
     }
 }
@@ -153,28 +156,48 @@ class FluentExceptionImpl(T : Exception) : T
     public const string reason = null;
     private const string rightPart = null; // after reason
 
+    invariant
+    {
+        assert(!this.leftPart.empty);
+    }
+
     public this(string leftPart, string rightPart, string file, size_t line) pure @safe
+    in
+    {
+        assert(!leftPart.empty);
+    }
+    do
     {
         this.leftPart = leftPart;
         this.rightPart = rightPart;
 
-        super(genMessage, file, line);
+        super(combinedMessage, file, line);
     }
 
     public this(string leftPart, string reason, string rightPart, string file, size_t line) pure @safe
+    in
+    {
+        assert(!leftPart.empty);
+    }
+    do
     {
         this.leftPart = leftPart;
         this.reason = reason;
         this.rightPart = rightPart;
 
-        super(genMessage, file, line);
+        super(combinedMessage, file, line);
     }
 
     public this(string msg, string file, size_t line) pure @safe
+    in
+    {
+        assert(!msg.empty);
+    }
+    do
     {
         this.leftPart = msg;
 
-        super(genMessage, file, line);
+        super(combinedMessage, file, line);
     }
 
     public FluentException because(string reason) pure @safe
@@ -182,19 +205,13 @@ class FluentExceptionImpl(T : Exception) : T
         return new FluentException(this.leftPart, reason, this.rightPart, this.file, this.line);
     }
 
-    private string genMessage() pure @safe
+    private @property string combinedMessage() pure @safe
     {
-        string message = "";
-
-        if (!this.leftPart.empty)
-        {
-            message = this.leftPart;
-        }
+        string message = this.leftPart;
 
         if (!this.reason.empty)
         {
-            message ~= message.empty ? "" : " ";
-            message ~= format!`because %s`(this.reason);
+            message ~= format!` because %s`(this.reason);
         }
 
         if (!this.rightPart.empty)
@@ -203,6 +220,18 @@ class FluentExceptionImpl(T : Exception) : T
         }
 
         return message;
+    }
+}
+
+T because(T)(lazy T value, string reason)
+{
+    try
+    {
+        return value;
+    }
+    catch (FluentException fluentException)
+    {
+        throw fluentException.because(reason);
     }
 }
 
