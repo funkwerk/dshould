@@ -18,7 +18,7 @@ public auto should(T)(lazy T got) pure
     return ShouldType!(typeof(&get))(&get);
 }
 
-public struct ShouldType(G, string[] Words = [])
+public struct ShouldType(G, string[] words = [])
 {
     import std.algorithm : canFind;
 
@@ -26,9 +26,9 @@ public struct ShouldType(G, string[] Words = [])
 
     private int* refs_ = null;
 
-    public auto addWord(string Word)()
+    public auto addWord(string word)()
     {
-        return ShouldType!(G, Words ~ Word)(this.got, this.refs);
+        return ShouldType!(G, words ~ word)(this.got, this.refs);
     }
 
     private this(G got) { this.got = got; this.refs = 1; }
@@ -82,11 +82,11 @@ public struct ShouldType(G, string[] Words = [])
         }
     }
 
-    public void allowOnlyWordsBefore(string[] AllowedWords, string NewWord)()
+    public void allowOnlyWordsBefore(string[] allowedWords, string newWord)()
     {
-        static foreach (Word; Words)
+        static foreach (word; words)
         {
-            static assert(AllowedWords.canFind(Word), `bad grammar: "` ~ Word ~ ` ` ~ NewWord ~ `"`);
+            static assert(allowedWords.canFind(word), `bad grammar: "` ~ word ~ ` ` ~ newWord ~ `"`);
         }
     }
 
@@ -95,15 +95,15 @@ public struct ShouldType(G, string[] Words = [])
         this.refs = CHAIN_TERMINATED; // terminate chain, safe ref checker
     }
 
-    public void requireWord(string RequiredWord, string NewWord)()
+    public void requireWord(string requiredWord, string newWord)()
     {
         static assert(
-            Words.canFind(RequiredWord),
-            `bad grammar: expected "` ~ RequiredWord ~ `" before "` ~ NewWord ~ `"`
+            words.canFind(requiredWord),
+            `bad grammar: expected "` ~ requiredWord ~ `" before "` ~ newWord ~ `"`
         );
     }
 
-    public enum hasWord(string Word) = Words.canFind(Word);
+    public enum hasWord(string word) = words.canFind(word);
 
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
     public auto empty()() { return this.empty_; }
