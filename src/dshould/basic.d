@@ -84,7 +84,7 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
                 check(
                     got !is expected,
                     format(": expected %s%s", refInfo, expected.quote),
-                    format(", but got %s", got.quote),
+                    isReferenceType ? ", but got same." : "but got it.",
                     file, line
                 );
             }
@@ -99,7 +99,6 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
             }
             else
             {
-
                 check(
                     got is expected,
                     format(": expected %s%s", refInfo, expected.quote),

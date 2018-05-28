@@ -81,7 +81,7 @@ unittest
 
     obj.should.not.be(obj)
         .should.throwA!FluentException(
-            "test failed: expected different reference than object.Object, but got object.Object");
+            "test failed: expected different reference than object.Object, but got same.");
 
     obj.should.be(new Object)
         .should.throwA!FluentException(
