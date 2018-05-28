@@ -14,7 +14,7 @@ pure @safe unittest
     5.should.be.greater.equal(5);
     5.should.be.greater.equal(4);
     5.should.not.be.greater.equal(6);
-    5.should.be.smaller(6);
+    5.should.be.less(6);
 }
 
 unittest
@@ -114,7 +114,7 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "greater", "smaller"], "equal");
+    should.allowOnlyWordsBefore!(["not", "be", "greater", "less"], "equal");
 
     return should.addWord!"equal";
 }
@@ -140,19 +140,19 @@ if (isInstanceOf!(ShouldType, Should))
     should.greater.numericCheck(expected, file, line);
 }
 
-auto smaller(Should)(Should should)
+auto less(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "equal"], "smaller");
-    should.requireWord!("be", "smaller");
+    should.allowOnlyWordsBefore!(["not", "be", "equal"], "less");
+    should.requireWord!("be", "less");
 
-    return should.addWord!"smaller";
+    return should.addWord!"less";
 }
 
-void smaller(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+void less(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.smaller.numericCheck(expected, file, line);
+    should.less.numericCheck(expected, file, line);
 }
 
 void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
@@ -165,12 +165,12 @@ if (isInstanceOf!(ShouldType, Should))
         enum notPart = hasWord!"not" ? "!" : "";
         enum equalPart = hasWord!"equal" ? "==" : "";
         enum equalPartShort = hasWord!"equal" ? "=" : "";
-        enum smallerPart = hasWord!"smaller" ? "<" : "";
+        enum lessPart = hasWord!"less" ? "<" : "";
         enum greaterPart = hasWord!"greater" ? ">" : "";
 
         auto got = should.got();
 
-        enum comparison = smallerPart ~ greaterPart;
+        enum comparison = lessPart ~ greaterPart;
 
         enum combined = comparison ~ (comparison.empty ? equalPart : equalPartShort);
 

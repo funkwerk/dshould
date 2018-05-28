@@ -94,7 +94,7 @@ unittest
     2.should.be.greater.equal(5)
         .should.throwA!FluentException("test failed: expected value >= 5, but got 2");
 
-    2.should.not.be.smaller.equal(5)
+    2.should.not.be.less.equal(5)
         .should.throwA!FluentException("test failed: expected value not <= 5, but got 2");
 }
 
