@@ -125,6 +125,17 @@ unittest
     (diff.original.join("\n") ~ diff.target.join("\n")).should.equal(patchTextOriginal ~ patchTextTarget);
 }
 
+unittest
+{
+    const originalText = "test";
+    const targetText = "test, but";
+
+    with (originalText.oneLineDiff(targetText))
+    {
+        (original ~ target).should.equal(originalText ~ originalText ~ green(", but"));
+    }
+}
+
 auto oneLineDiff(string expected, string text) @safe
 {
     alias removePred = text => red(text);
@@ -309,9 +320,13 @@ private struct Levenshtein(Range)
 
             foreach (j; 1 .. this.cols)
             {
-                auto costInsertion = this.matrix(i, j - 1).cost + insertionIncrement + pathCost(EditOp.insert, i, j);
-                auto costDeletion = this.matrix(i - 1, j).cost + deletionIncrement + pathCost(EditOp.remove, i, j);
-                auto costNone = (sFront == tCurrent.front) ? this.matrix(i - 1, j - 1).cost : float.infinity;
+                auto costInsertion = this.matrix(i, j - 1).cost + insertionIncrement
+                    + pathCost(EditOp.insert, i, j);
+                auto costDeletion = this.matrix(i - 1, j).cost + deletionIncrement
+                    + pathCost(EditOp.remove, i, j);
+                auto costNone = (sFront != tCurrent.front)
+                    ? float.infinity
+                    : (this.matrix(i - 1, j - 1).cost + pathCost(EditOp.none, i, j));
 
                 tCurrent.popFront();
 
@@ -346,6 +361,61 @@ private struct Levenshtein(Range)
         }
     }
 
+    private float pathCost(EditOp proposedOp, size_t i, size_t j)
+    {
+        import std.algorithm : countUntil, endsWith, equal, filter;
+
+        alias step = (a, n) {
+            auto cell = a[n - 1];
+
+            if (cell.i == 0 && cell.j == 0)
+            {
+                return cell;
+            }
+
+            moveByOp(cell.op, cell.i, cell.j);
+
+            return typeof(cell)(matrix(cell.i, cell.j).op, cell.i, cell.j);
+        };
+
+        auto infiniteTrace = tuple!("op", "i", "j")(proposedOp, i, j).recurrence!step;
+        auto trace = infiniteTrace.takeExactly(infiniteTrace.countUntil!(a => a.i == 0 && a.j == 0)).map!(a => a.op);
+        auto traceInsert = trace.filter!(op => op == EditOp.insert || op == EditOp.none);
+        auto traceRemove = trace.filter!(op => op == EditOp.remove || op == EditOp.none);
+
+        // significantly penalize orphaned "no change" lines
+        alias orphan = op => only(op, EditOp.none, op);
+        const orphanPathCost =
+            traceInsert.take(3).equal(orphan(EditOp.insert)) ? orphanCost : 0 +
+            traceRemove.take(3).equal(orphan(EditOp.remove)) ? orphanCost : 0;
+
+        // slightly penalize mode changes, to avoid pathologies arising from distant matches
+        const pathChangesModeCost =
+            traceInsert.take(2).equal(only(EditOp.none, EditOp.insert)) ? modeChangeCost : 0 +
+            traceRemove.take(2).equal(only(EditOp.none, EditOp.remove)) ? modeChangeCost : 0;
+
+        return orphanPathCost + pathChangesModeCost;
+    }
+
+    public EditOp[] reconstructPath()
+    {
+        import std.algorithm.mutation : reverse;
+
+        EditOp[] result;
+        size_t i = this.rows - 1;
+        size_t j = this.cols - 1;
+
+        while (i > 0 || j > 0)
+        {
+            const op = matrix(i, j).op;
+
+            result ~= op;
+            moveByOp(op, i, j);
+        }
+        reverse(result);
+        return result;
+    }
+
     private void moveByOp(EditOp op, ref size_t i, ref size_t j)
     in
     {
@@ -370,54 +440,10 @@ private struct Levenshtein(Range)
         }
     }
 
-    private float pathCost(EditOp proposedOp, size_t i, size_t j)
-    {
-        import std.algorithm : countUntil, endsWith, equal, filter;
-
-        alias step = (a, n) {
-            auto cell = a[n - 1];
-
-            if (cell.i == 0 && cell.j == 0)
-            {
-                return cell;
-            }
-
-            moveByOp(cell.op, cell.i, cell.j);
-
-            return typeof(cell)(matrix(cell.i, cell.j).op, cell.i, cell.j);
-        };
-
-        auto infiniteTrace = tuple!("op", "i", "j")(proposedOp, i, j).recurrence!step;
-        auto trace = infiniteTrace.takeExactly(infiniteTrace.countUntil!(a => a.i == 0 && a.j == 0)).map!(a => a.op);
-        auto traceInsert = trace.filter!(op => op == EditOp.insert || op == EditOp.none);
-        auto traceRemove = trace.filter!(op => op == EditOp.remove || op == EditOp.none);
-
-        return traceInsert.take(3).equal(only(EditOp.insert, EditOp.none, EditOp.insert)) ? orphanCost : 0
-            +  traceRemove.take(3).equal(only(EditOp.remove, EditOp.none, EditOp.remove)) ? orphanCost : 0;
-    }
-
-    public EditOp[] reconstructPath()
-    {
-        import std.algorithm.mutation : reverse;
-
-        EditOp[] result;
-        size_t i = this.rows - 1;
-        size_t j = this.cols - 1;
-
-        while (i > 0 || j > 0)
-        {
-            const op = matrix(i, j).op;
-
-            result ~= op;
-            moveByOp(op, i, j);
-        }
-        reverse(result);
-        return result;
-    }
-
     private enum deletionIncrement = 1;
     private enum insertionIncrement = 1;
     private enum orphanCost = 2.5;
+    private enum modeChangeCost = 0.05;
 
     private alias Cell = Tuple!(float, "cost", EditOp, "op");
     private Cell[] matrixData = null;
