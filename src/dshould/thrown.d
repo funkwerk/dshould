@@ -30,7 +30,7 @@ template throwA(T : Throwable)
     auto throwA(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
     {
-        should.allowOnlyWordsBefore!(["not"], "throwA");
+        should.allowOnlyWords!("not").before!"throwA";
 
         should.terminateChain;
 

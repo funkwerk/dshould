@@ -10,7 +10,7 @@ import dshould.basic;
 void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && is(T == string))
 {
-    should.allowOnlyWordsBefore!([], "equal (string)");
+    should.allowOnlyWords!().before!"equal (string)";
 
     should.addWord!"equal".stringCmp(expected, file, line);
 }
@@ -20,7 +20,7 @@ if (isInstanceOf!(ShouldType, Should))
 {
     import std.algorithm : canFind;
 
-    should.allowOnlyWordsBefore!(["equal"], "");
+    should.allowOnlyWords!("equal").before!"equal (string)";
 
     should.terminateChain;
 

@@ -2,6 +2,7 @@ module dshould.ShouldType;
 
 import std.algorithm : map;
 import std.format : format;
+import std.meta : allSatisfy;
 import std.range : iota;
 import std.string : empty, join;
 import std.traits : TemplateArgsOf;
@@ -85,25 +86,34 @@ public struct ShouldType(G, string[] phrase = [])
         }
     }
 
-    public void allowOnlyWordsBefore(string[] allowedWords, string newWord)()
+    private static enum isStringLiteral(T...) = T.length == 1 && is(typeof(T[0]) == string);
+
+    public template allowOnlyWords(allowedWords...)
+    if (allSatisfy!(isStringLiteral, allowedWords))
     {
-        static foreach (word; phrase)
+        void before(string newWord)()
         {
-            static assert(allowedWords.canFind(word), `bad grammar: "` ~ word ~ ` ` ~ newWord ~ `"`);
+            static foreach (word; phrase)
+            {
+                static assert([allowedWords].canFind(word), `bad grammar: "` ~ word ~ ` ` ~ newWord ~ `"`);
+            }
+        }
+    }
+
+    public template requireWord(string requiredWord)
+    {
+        void before(string newWord)()
+        {
+            static assert(
+                hasWord!requiredWord,
+                `bad grammar: expected "` ~ requiredWord ~ `" before "` ~ newWord ~ `"`
+            );
         }
     }
 
     public void terminateChain()
     {
         this.refCount = CHAIN_TERMINATED; // terminate chain, safe ref checker
-    }
-
-    public void requireWord(string requiredWord, string newWord)()
-    {
-        static assert(
-            hasWord!requiredWord,
-            `bad grammar: expected "` ~ requiredWord ~ `" before "` ~ newWord ~ `"`
-        );
     }
 
     public enum hasWord(string word) = phrase.canFind(word);
@@ -132,8 +142,8 @@ if (isInstanceOf!(ShouldType, Should))
 
     with (should)
     {
-        allowOnlyWordsBefore!(["be", "not"], "empty");
-        requireWord!("be", "empty");
+        allowOnlyWords!("be", "not").before!"empty";
+        requireWord!"be".before!"empty";
 
         terminateChain;
 

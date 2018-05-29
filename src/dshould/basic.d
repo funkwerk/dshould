@@ -43,7 +43,7 @@ unittest
 auto not(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!([], "not");
+    should.allowOnlyWords!().before!"not";
 
     return should.addWord!"not";
 }
@@ -51,7 +51,7 @@ if (isInstanceOf!(ShouldType, Should))
 auto be(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not"], "be");
+    should.allowOnlyWords!("not").before!"be";
 
     return should.addWord!"be";
 }
@@ -63,7 +63,7 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
     with (should)
     {
-        allowOnlyWordsBefore!(["not"], "be");
+        allowOnlyWords!("not").before!"be";
 
         enum isNullType = is(T == typeof(null));
         // only types that can have toString need to disambiguate
@@ -113,7 +113,7 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "greater", "less"], "equal");
+    should.allowOnlyWords!("not", "be", "greater", "less").before!"equal";
 
     return should.addWord!"equal";
 }
@@ -127,8 +127,8 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 auto greater(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "equal"], "greater");
-    should.requireWord!("be", "greater");
+    should.allowOnlyWords!("not", "be", "equal").before!"greater";
+    should.requireWord!"be".before!"greater";
 
     return should.addWord!"greater";
 }
@@ -142,8 +142,8 @@ if (isInstanceOf!(ShouldType, Should))
 auto less(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "be", "equal"], "less");
-    should.requireWord!("be", "less");
+    should.allowOnlyWords!("not", "be", "equal").before!"less";
+    should.requireWord!"be".before!"less";
 
     return should.addWord!"less";
 }
@@ -161,7 +161,6 @@ if (isInstanceOf!(ShouldType, Should))
 
     with (should)
     {
-        enum notPart = hasWord!"not" ? "!" : "";
         enum equalPart = hasWord!"equal" ? "==" : "";
         enum equalPartShort = hasWord!"equal" ? "=" : "";
         enum lessPart = hasWord!"less" ? "<" : "";
@@ -242,7 +241,7 @@ if (isInstanceOf!(ShouldType, Should))
         `bad grammar: expected "be" or "equal" before "approximately"`
     );
 
-    should.allowOnlyWordsBefore!(["be", "equal", "not"], "approximately");
+    should.allowOnlyWords!("be", "equal", "not").before!"approximately";
 
     return should
         .addWord!"approximately"
@@ -259,7 +258,7 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
         pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
     }
 
-    should.allowOnlyWordsBefore!(["approximately", "not"], "equal");
+    should.allowOnlyWords!("approximately", "not").before!"equal";
 
     return should.approximateCheck(expected, error, file, line);
 }
@@ -267,7 +266,7 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 void equal(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
-    should.allowOnlyWordsBefore!(["approximately", "not"], "be");
+    should.allowOnlyWords!("approximately", "not").before!"be";
 
     return should.approximateCheck(expected, error, file, line);
 }

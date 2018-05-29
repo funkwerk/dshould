@@ -21,7 +21,7 @@ unittest
 auto only(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not"], "only");
+    should.allowOnlyWords!("not").before!"only";
 
     return should.addWord!"only";
 }
@@ -29,7 +29,7 @@ if (isInstanceOf!(ShouldType, Should))
 void contain(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not", "only"], "contain");
+    should.allowOnlyWords!("not", "only").before!"contain";
 
     should.addWord!"contain".checkContain(expected, file, line);
 }
@@ -37,7 +37,7 @@ if (isInstanceOf!(ShouldType, Should))
 auto contain(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.allowOnlyWordsBefore!(["not"], "contain");
+    should.allowOnlyWords!("not").before!"contain";
 
     return should.addWord!"contain";
 }
@@ -45,8 +45,8 @@ if (isInstanceOf!(ShouldType, Should))
 void all(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.requireWord!("contain", "all");
-    should.allowOnlyWordsBefore!(["not", "contain"], "all");
+    should.requireWord!"contain".before!"all";
+    should.allowOnlyWords!("not", "contain").before!"all";
 
     should.addWord!"all".checkContain(expected, file, line);
 }
@@ -54,8 +54,8 @@ if (isInstanceOf!(ShouldType, Should))
 void any(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.requireWord!("contain", "any");
-    should.allowOnlyWordsBefore!(["not", "contain"], "any");
+    should.requireWord!"contain".before!"any";
+    should.allowOnlyWords!("not", "contain").before!"any";
 
     should.addWord!"any".checkContain(expected, file, line);
 }
@@ -63,8 +63,8 @@ if (isInstanceOf!(ShouldType, Should))
 void only(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.requireWord!("contain", "only");
-    should.allowOnlyWordsBefore!(["not", "contain"], "only");
+    should.requireWord!"contain".before!"only";
+    should.allowOnlyWords!("not", "contain").before!"only";
 
     should.addWord!"only".checkContain(expected, file, line);
 }
@@ -83,7 +83,7 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (rhsIsValue)
         {
-            allowOnlyWordsBefore!(["not", "only", "contain"], "contain");
+            allowOnlyWords!("not", "only", "contain").before!"contain";
 
             static if (hasWord!"only")
             {
