@@ -135,7 +135,7 @@ public struct ShouldType(G, string[] phrase = [])
 }
 
 // must be here due to https://issues.dlang.org/show_bug.cgi?id=18839
-void empty_(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
+public void empty_(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.range : empty;
@@ -160,7 +160,7 @@ if (isInstanceOf!(ShouldType, Should))
     }
 }
 
-class FluentExceptionImpl(T : Exception) : T
+private class FluentExceptionImpl(T : Exception) : T
 {
     private const string leftPart = null; // before reason
     public const string reason = null;
@@ -233,7 +233,7 @@ class FluentExceptionImpl(T : Exception) : T
     }
 }
 
-T because(T)(lazy T value, string reason)
+public T because(T)(lazy T value, string reason)
 {
     try
     {
@@ -249,9 +249,9 @@ static if (__traits(compiles, { import unit_threaded.should : UnitTestException;
 {
     import unit_threaded.should : UnitTestException;
 
-    alias FluentException = FluentExceptionImpl!UnitTestException;
+    public alias FluentException = FluentExceptionImpl!UnitTestException;
 }
 else
 {
-    alias FluentException = FluentExceptionImpl!Exception;
+    public alias FluentException = FluentExceptionImpl!Exception;
 }

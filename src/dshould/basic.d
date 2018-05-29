@@ -4,31 +4,28 @@ import std.string : empty;
 import dshould.ShouldType;
 public import dshould.ShouldType : should;
 
-pure @safe unittest
+unittest
 {
-    2.should.be(2);
-    2.should.not.be(5);
-    5.should.equal(5);
-    5.should.not.equal(6);
-    5.should.not.be.greater.equal(6);
-    5.should.be.greater.equal(5);
-    5.should.be.greater.equal(4);
-    5.should.not.be.greater.equal(6);
-    5.should.be.less(6);
+    (new Object).should.not.be(new Object);
+    (new Object).should.not.be(null);
+    (cast(Object) null).should.be(null);
 }
 
 unittest
 {
-    (new Object).should.not.be(new Object);
     (new Object).should.not.equal(new Object);
-    (new Object).should.not.be(null);
-    (cast(Object) null).should.be(null);
+}
 
+unittest
+{
     auto obj = new Object;
 
     obj.should.equal(obj);
     obj.should.be(obj);
+}
 
+unittest
+{
     class SameyClass
     {
         override bool opEquals(Object o) { return true; }
@@ -36,11 +33,14 @@ unittest
 
     (new SameyClass).should.not.be(new SameyClass);
     (new SameyClass).should.equal(new SameyClass);
+}
 
+unittest
+{
     (cast(void delegate()) null).should.be(null);
 }
 
-auto not(Should)(Should should) pure
+public auto not(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!().before!"not";
@@ -48,7 +48,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"not";
 }
 
-auto be(Should)(Should should) pure
+public auto be(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not").before!"be";
@@ -56,7 +56,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"be";
 }
 
-void be(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void be(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
     import std.format : format;
@@ -110,7 +110,13 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
     }
 }
 
-auto equal(Should)(Should should)
+pure @safe unittest
+{
+    2.should.be(2);
+    2.should.not.be(5);
+}
+
+public auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not", "be", "greater", "less").before!"equal";
@@ -118,13 +124,19 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"equal";
 }
 
-void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
     should.equal.numericCheck(expected, file, line);
 }
 
-auto greater(Should)(Should should)
+pure @safe unittest
+{
+    5.should.equal(5);
+    5.should.not.equal(6);
+}
+
+public auto greater(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not", "be", "equal").before!"greater";
@@ -133,13 +145,21 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"greater";
 }
 
-void greater(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void greater(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.greater.numericCheck(expected, file, line);
 }
 
-auto less(Should)(Should should)
+pure @safe unittest
+{
+    5.should.not.be.greater.equal(6);
+    5.should.be.greater.equal(5);
+    5.should.be.greater.equal(4);
+    5.should.not.be.greater.equal(6);
+}
+
+public auto less(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not", "be", "equal").before!"less";
@@ -148,13 +168,18 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"less";
 }
 
-void less(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void less(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.less.numericCheck(expected, file, line);
 }
 
-void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
+pure @safe unittest
+{
+    5.should.be.less(6);
+}
+
+private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.format : format;
@@ -197,17 +222,8 @@ if (isInstanceOf!(ShouldType, Should))
  * if doing so didn't crash dmd.
  * see https://issues.dlang.org/show_bug.cgi?id=18839
  */
-unittest
-{
-    5.should.be.approximately(5.1, error = 0.11);
-    5.should.approximately.be(5.1, error = 0.11);
-    0.should.approximately.equal(1.0, error = 1.1);
-    0.should.approximately.equal(-1.0, error = 1.1);
-    0.should.not.approximately.equal(1, error = 0.1);
-    42.3.should.be.approximately(42.3, error = 1e-3);
-}
 
-struct ErrorValue
+private struct ErrorValue
 {
     @disable this();
 
@@ -224,13 +240,13 @@ public auto error(double value)
     return ErrorValue(value);
 }
 
-auto approximately(Should)(Should should)
+public auto approximately(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     return should.addWord!"approximately";
 }
 
-auto approximately(Should)(
+public auto approximately(Should)(
     Should should, double expected, ErrorValue error,
     string file = __FILE__, size_t line = __LINE__
 )
@@ -248,7 +264,7 @@ if (isInstanceOf!(ShouldType, Should))
         .approximateCheck(expected, error, file, line);
 }
 
-void be(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
+public void be(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     import std.traits : isDynamicArray;
@@ -263,7 +279,7 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
     return should.approximateCheck(expected, error, file, line);
 }
 
-void equal(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     should.allowOnlyWords!("approximately", "not").before!"be";
@@ -271,7 +287,17 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
     return should.approximateCheck(expected, error, file, line);
 }
 
-void approximateCheck(Should, T)(Should should, T expected, ErrorValue error, string file, size_t line)
+unittest
+{
+    5.should.be.approximately(5.1, error = 0.11);
+    5.should.approximately.be(5.1, error = 0.11);
+    0.should.approximately.equal(1.0, error = 1.1);
+    0.should.approximately.equal(-1.0, error = 1.1);
+    0.should.not.approximately.equal(1, error = 0.1);
+    42.3.should.be.approximately(42.3, error = 1e-3);
+}
+
+private void approximateCheck(Should, T)(Should should, T expected, ErrorValue error, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.format : format;

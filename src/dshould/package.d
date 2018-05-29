@@ -9,7 +9,7 @@ public import dshould.stringcmp;
 public import dshould.thrown;
 
 // dispatch based on type
-void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     static if (is(typeof(should.got()) == string) && is(T == string) && !Should.hasWord!"not")
@@ -22,13 +22,13 @@ if (isInstanceOf!(ShouldType, Should))
     }
 }
 
-auto equal(Should)(Should should)
+public auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     return should.basic.equal(should);
 }
 
-template throwA(T : Throwable)
+public template throwA(T : Throwable)
 {
     void throwA(Should, string file = __FILE__)(Should should, string msgTest, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
@@ -43,7 +43,7 @@ template throwA(T : Throwable)
     }
 }
 
-alias throwAn = throwA;
+public alias throwAn = throwA;
 
 @("because defines reason for assertion")
 unittest

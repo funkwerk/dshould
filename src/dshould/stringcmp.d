@@ -7,7 +7,7 @@ import std.typecons;
 import dshould.ShouldType;
 import dshould.basic;
 
-void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && is(T == string))
 {
     should.allowOnlyWords!().before!"equal (string)";
@@ -15,7 +15,7 @@ if (isInstanceOf!(ShouldType, Should) && is(T == string))
     should.addWord!"equal".stringCmp(expected, file, line);
 }
 
-void stringCmp(Should, T)(Should should, T expected, string file, size_t line)
+private void stringCmp(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.algorithm : canFind;
@@ -54,6 +54,28 @@ if (isInstanceOf!(ShouldType, Should))
     }
 }
 
+private auto oneLineDiff(string expected, string text) @safe
+{
+    alias removePred = text => red(text);
+    alias addPred = text => green(text);
+    alias keepPred = text => text;
+    alias ditchPred = lines => string.init;
+
+    auto originalColored = colorizedDiff!(string, removePred, ditchPred, keepPred)(expected, text);
+    auto targetColored = colorizedDiff!(string, ditchPred, addPred, keepPred)(expected, text);
+
+    alias DiffPair = Tuple!(string, "original", string, "target");
+
+    if (originalColored.isNull)
+    {
+        return DiffPair(expected, text);
+    }
+    else
+    {
+        return DiffPair(originalColored.get, targetColored.get);
+    }
+}
+
 @("collates successive replacements")
 unittest
 {
@@ -78,6 +100,39 @@ unittest
     const cleanDiff = `method="` ~ GREEN_CODE ~ `multiply` ~ CLEAR_CODE ~ `"`;
 
     `method="update"`.oneLineDiff(`method="multiply"`).target.should.equal(cleanDiff);
+}
+
+unittest
+{
+    const originalText = "test";
+    const targetText = "test, but";
+
+    with (originalText.oneLineDiff(targetText))
+    {
+        (original ~ target).should.equal(originalText ~ originalText ~ green(", but"));
+    }
+}
+
+private auto multiLineDiff(string[] expected, string[] text) @safe
+{
+    alias removePred = lines => lines.map!(line => red("-" ~ line));
+    alias addPred = lines => lines.map!(line => green("+" ~ line));
+    alias keepPred = lines => lines.map!(line => " " ~ line);
+    alias ditchPred = lines => (string[]).init;
+
+    auto originalColored = colorizedDiff!(string[], removePred, ditchPred, keepPred)(expected, text);
+    auto targetColored = colorizedDiff!(string[], ditchPred, addPred, keepPred)(expected, text);
+
+    alias DiffPair = Tuple!(string[], "original", string[], "target");
+
+    if (originalColored.isNull)
+    {
+        return DiffPair(expected, text);
+    }
+    else
+    {
+        return DiffPair(originalColored.get, targetColored.get);
+    }
 }
 
 @("supports multiline diff")
@@ -125,63 +180,8 @@ unittest
     (diff.original.join("\n") ~ diff.target.join("\n")).should.equal(patchTextOriginal ~ patchTextTarget);
 }
 
-unittest
-{
-    const originalText = "test";
-    const targetText = "test, but";
-
-    with (originalText.oneLineDiff(targetText))
-    {
-        (original ~ target).should.equal(originalText ~ originalText ~ green(", but"));
-    }
-}
-
-auto oneLineDiff(string expected, string text) @safe
-{
-    alias removePred = text => red(text);
-    alias addPred = text => green(text);
-    alias keepPred = text => text;
-    alias ditchPred = lines => string.init;
-
-    auto originalColored = colorizedDiff!(string, removePred, ditchPred, keepPred)(expected, text);
-    auto targetColored = colorizedDiff!(string, ditchPred, addPred, keepPred)(expected, text);
-
-    alias DiffPair = Tuple!(string, "original", string, "target");
-
-    if (originalColored.isNull)
-    {
-        return DiffPair(expected, text);
-    }
-    else
-    {
-        return DiffPair(originalColored.get, targetColored.get);
-    }
-}
-
-auto multiLineDiff(string[] expected, string[] text) @safe
-{
-    alias removePred = lines => lines.map!(line => red("-" ~ line));
-    alias addPred = lines => lines.map!(line => green("+" ~ line));
-    alias keepPred = lines => lines.map!(line => " " ~ line);
-    alias ditchPred = lines => (string[]).init;
-
-    auto originalColored = colorizedDiff!(string[], removePred, ditchPred, keepPred)(expected, text);
-    auto targetColored = colorizedDiff!(string[], ditchPred, addPred, keepPred)(expected, text);
-
-    alias DiffPair = Tuple!(string[], "original", string[], "target");
-
-    if (originalColored.isNull)
-    {
-        return DiffPair(expected, text);
-    }
-    else
-    {
-        return DiffPair(originalColored.get, targetColored.get);
-    }
-}
-
 // TODO bracket crossing cost
-Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) @trusted
+private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) @trusted
 {
     import std.algorithm : count;
     import std.array : Appender, empty;

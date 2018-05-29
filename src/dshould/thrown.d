@@ -5,27 +5,7 @@ import std.traits : CommonType;
 import std.typecons;
 import dshould.ShouldType;
 
-unittest
-{
-    import dshould.basic : be, equal, not, should;
-
-    auto exception = new Exception("");
-
-    /**
-     * Throws: Exception
-     */
-    void throwsException() { throw exception; }
-
-    throwsException.should.throwAn!Exception.which.should.be(exception);
-    throwsException.should.throwAn!Exception.which.should.not.be(null);
-
-    2.should.be(5).should.throwA!FluentException;
-    2.should.be(5).should.throwAn!Error.should.throwA!FluentException;
-
-    2.should.be(2).should.not.throwA!FluentException;
-}
-
-template throwA(T : Throwable)
+public template throwA(T : Throwable)
 {
     auto throwA(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
@@ -114,4 +94,24 @@ template throwA(T : Throwable)
     }
 }
 
-alias throwAn = throwA;
+public alias throwAn = throwA;
+
+unittest
+{
+    import dshould.basic : be, equal, not, should;
+
+    auto exception = new Exception("");
+
+    /**
+     * Throws: Exception
+     */
+    void throwsException() { throw exception; }
+
+    throwsException.should.throwAn!Exception.which.should.be(exception);
+    throwsException.should.throwAn!Exception.which.should.not.be(null);
+
+    2.should.be(5).should.throwA!FluentException;
+    2.should.be(5).should.throwAn!Error.should.throwA!FluentException;
+
+    2.should.be(2).should.not.throwA!FluentException;
+}

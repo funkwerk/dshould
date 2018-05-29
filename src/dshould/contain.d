@@ -18,7 +18,7 @@ unittest
     [2, 3, 4].should.not.only.contain([4, 3]);
 }
 
-auto only(Should)(Should should)
+public auto only(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not").before!"only";
@@ -26,7 +26,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"only";
 }
 
-void contain(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void contain(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not", "only").before!"contain";
@@ -34,7 +34,7 @@ if (isInstanceOf!(ShouldType, Should))
     should.addWord!"contain".checkContain(expected, file, line);
 }
 
-auto contain(Should)(Should should)
+public auto contain(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not").before!"contain";
@@ -42,7 +42,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"contain";
 }
 
-void all(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void all(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!"contain".before!"all";
@@ -51,7 +51,7 @@ if (isInstanceOf!(ShouldType, Should))
     should.addWord!"all".checkContain(expected, file, line);
 }
 
-void any(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void any(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!"contain".before!"any";
@@ -60,7 +60,7 @@ if (isInstanceOf!(ShouldType, Should))
     should.addWord!"any".checkContain(expected, file, line);
 }
 
-void only(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void only(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!"contain".before!"only";
@@ -69,7 +69,7 @@ if (isInstanceOf!(ShouldType, Should))
     should.addWord!"only".checkContain(expected, file, line);
 }
 
-void checkContain(Should, T)(Should should, T expected, string file, size_t line)
+private void checkContain(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.algorithm : any, all, canFind;
