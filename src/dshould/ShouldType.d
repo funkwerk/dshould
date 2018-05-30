@@ -92,6 +92,11 @@ public struct ShouldType(G, string[] phrase = [])
         }
     }
 
+    public void terminateChain()
+    {
+        this.refCount = CHAIN_TERMINATED; // terminate chain, safe ref checker
+    }
+
     private static enum isStringLiteral(T...) = T.length == 1 && is(typeof(T[0]) == string);
 
     public template allowOnlyWords(allowedWords...)
@@ -115,11 +120,6 @@ public struct ShouldType(G, string[] phrase = [])
                 `bad grammar: expected "` ~ requiredWord ~ `" before "` ~ newWord ~ `"`
             );
         }
-    }
-
-    public void terminateChain()
-    {
-        this.refCount = CHAIN_TERMINATED; // terminate chain, safe ref checker
     }
 
     public enum hasWord(string word) = phrase.canFind(word);

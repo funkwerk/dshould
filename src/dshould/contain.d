@@ -146,7 +146,7 @@ if (isInstanceOf!(ShouldType, Should))
             else
             {
                 static assert(false,
-                    `bad grammar: expected "all", "any" or "only" before "contain"`);
+                    `bad grammar: expected "contain all", "contain any", "contain only" (or "only contain")`);
             }
         }
     }
