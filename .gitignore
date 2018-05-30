@@ -1,0 +1,6 @@
+*.[oa]
+/.dub
+/libshould.a
+/should
+*.lst
+/build/
