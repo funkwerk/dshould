@@ -26,7 +26,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"only";
 }
 
-public void contain(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void contain(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not", "only").before!"contain";
@@ -42,7 +42,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"contain";
 }
 
-public void all(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void all(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!"contain".before!"all";
@@ -51,7 +51,7 @@ if (isInstanceOf!(ShouldType, Should))
     should.addWord!"all".checkContain(expected, file, line);
 }
 
-public void any(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void any(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!"contain".before!"any";
@@ -60,7 +60,7 @@ if (isInstanceOf!(ShouldType, Should))
     should.addWord!"any".checkContain(expected, file, line);
 }
 
-public void only(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void only(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.requireWord!"contain".before!"only";

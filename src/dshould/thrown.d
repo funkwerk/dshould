@@ -7,7 +7,7 @@ import dshould.ShouldType;
 
 public template throwA(T : Throwable)
 {
-    auto throwA(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
+    auto throwA(Should)(Should should, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
     {
         should.allowOnlyWords!("not").before!"throwA";

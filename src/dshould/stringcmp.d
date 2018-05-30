@@ -7,7 +7,7 @@ import std.typecons;
 import dshould.ShouldType;
 import dshould.basic;
 
-public void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && is(T == string))
 {
     should.allowOnlyWords!().before!"equal (string)";

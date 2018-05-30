@@ -56,7 +56,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"be";
 }
 
-public void be(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
     import std.format : format;
@@ -124,7 +124,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"equal";
 }
 
-public void equal(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
     should.equal.numericCheck(expected, file, line);
@@ -145,7 +145,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"greater";
 }
 
-public void greater(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void greater(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.greater.numericCheck(expected, file, line);
@@ -168,7 +168,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"less";
 }
 
-public void less(Should, T)(Should should, T expected, string file = __FILE__, size_t line = __LINE__)
+public void less(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     should.less.numericCheck(expected, file, line);
@@ -248,7 +248,7 @@ if (isInstanceOf!(ShouldType, Should))
 
 public auto approximately(Should)(
     Should should, double expected, ErrorValue error,
-    string file = __FILE__, size_t line = __LINE__
+    Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__
 )
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -264,7 +264,7 @@ if (isInstanceOf!(ShouldType, Should))
         .approximateCheck(expected, error, file, line);
 }
 
-public void be(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
+public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     import std.traits : isDynamicArray;
@@ -279,7 +279,7 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
     return should.approximateCheck(expected, error, file, line);
 }
 
-public void equal(Should, T)(Should should, T expected, ErrorValue error, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     should.allowOnlyWords!("approximately", "not").before!"be";

@@ -9,6 +9,12 @@ import std.traits : TemplateArgsOf;
 public import std.traits : isInstanceOf;
 import std.typecons : Tuple;
 
+// prevent default arguments from being accidentally filled by regular parameters
+// void foo(..., Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+public struct Fence
+{
+}
+
 public auto should(T)(lazy T got) pure
 {
     T get() pure @safe
@@ -135,7 +141,7 @@ public struct ShouldType(G, string[] phrase = [])
 }
 
 // must be here due to https://issues.dlang.org/show_bug.cgi?id=18839
-public void empty_(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
+public void empty_(Should)(Should should, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.range : empty;

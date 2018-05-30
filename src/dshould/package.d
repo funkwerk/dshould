@@ -9,16 +9,16 @@ public import dshould.stringcmp;
 public import dshould.thrown;
 
 // dispatch based on type
-public void equal(Should, T)(Should should, T value, string file = __FILE__, size_t line = __LINE__)
+public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
     static if (is(typeof(should.got()) == string) && is(T == string) && !Should.hasWord!"not")
     {
-        dshould.stringcmp.equal(should, value, file, line);
+        dshould.stringcmp.equal(should, value, Fence(), file, line);
     }
     else
     {
-        dshould.basic.equal(should, value, file, line);
+        dshould.basic.equal(should, value, Fence(), file, line);
     }
 }
 
@@ -30,16 +30,16 @@ if (isInstanceOf!(ShouldType, Should))
 
 public template throwA(T : Throwable)
 {
-    void throwA(Should, string file = __FILE__)(Should should, string msgTest, size_t line = __LINE__)
+    void throwA(Should)(Should should, string msgTest, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
     {
-        dshould.thrown.throwA!T(should, file, line).where.msg.should.equal(msgTest, file, line);
+        dshould.thrown.throwA!T(should, Fence(), file, line).where.msg.should.equal(msgTest, Fence(), file, line);
     }
 
-    auto throwA(Should, string file = __FILE__)(Should should, size_t line = __LINE__)
+    auto throwA(Should)(Should should, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
     if (isInstanceOf!(ShouldType, Should))
     {
-        return dshould.thrown.throwA!T(should, file, line);
+        return dshould.thrown.throwA!T(should, Fence(), file, line);
     }
 }
 
