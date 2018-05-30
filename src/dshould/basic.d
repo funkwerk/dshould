@@ -4,42 +4,9 @@ import std.string : empty;
 import dshould.ShouldType;
 public import dshould.ShouldType : should;
 
-unittest
-{
-    (new Object).should.not.be(new Object);
-    (new Object).should.not.be(null);
-    (cast(Object) null).should.be(null);
-}
-
-unittest
-{
-    (new Object).should.not.equal(new Object);
-}
-
-unittest
-{
-    auto obj = new Object;
-
-    obj.should.equal(obj);
-    obj.should.be(obj);
-}
-
-unittest
-{
-    class SameyClass
-    {
-        override bool opEquals(Object o) { return true; }
-    }
-
-    (new SameyClass).should.not.be(new SameyClass);
-    (new SameyClass).should.equal(new SameyClass);
-}
-
-unittest
-{
-    (cast(void delegate()) null).should.be(null);
-}
-
+/**
+ * The word `.not` negates the current phrase.
+ */
 public auto not(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -48,14 +15,11 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"not";
 }
 
-public auto be(Should)(Should should) pure
-if (isInstanceOf!(ShouldType, Should))
-{
-    should.allowOnlyWords!("not").before!"be";
-
-    return should.addWord!"be";
-}
-
+/**
+ * The word `.be` indicates a test for identity.
+ * For value types, this is equivalent to equality.
+ * It takes one parameter and terminates the phrase.
+ */
 public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
@@ -110,12 +74,88 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
     }
 }
 
+///
 pure @safe unittest
 {
     2.should.be(2);
     2.should.not.be(5);
 }
 
+///
+unittest
+{
+    (new Object).should.not.be(new Object);
+    (new Object).should.not.be(null);
+    (cast(Object) null).should.be(null);
+}
+
+///
+unittest
+{
+    (cast(void delegate()) null).should.be(null);
+}
+
+/**
+ * When called without parameters, `.be` is a filler word for `.greater`, `.less` or `.equal`.
+ */
+public auto be(Should)(Should should) pure
+if (isInstanceOf!(ShouldType, Should))
+{
+    should.allowOnlyWords!("not").before!"be";
+
+    return should.addWord!"be";
+}
+
+/**
+ * The word `.equal` tests for equality.
+ * It takes one parameter and terminates the phrase.
+ * Its parameter is the expected value for the left-hand side of the should phrase.
+ */
+public void equal(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
+{
+    should.equal.numericCheck(expected, file, line);
+}
+
+///
+pure @safe unittest
+{
+    5.should.equal(5);
+    5.should.not.equal(6);
+}
+
+///
+unittest
+{
+    (new Object).should.not.equal(new Object);
+}
+
+///
+unittest
+{
+    auto obj = new Object;
+
+    obj.should.equal(obj);
+    obj.should.be(obj);
+}
+
+///
+unittest
+{
+    class SameyClass
+    {
+        override bool opEquals(Object o) { return true; }
+    }
+
+    (new SameyClass).should.not.be(new SameyClass);
+    (new SameyClass).should.equal(new SameyClass);
+}
+
+/**
+ * When called without parameters, `.equal` must be terminated by `.greater` or `.less`.
+ * .should.be.equal.greater(...) is equivalent to .should.be.greater.equal(...)
+ * is equivalent to assert(got >= expected).
+ */
 public auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -124,18 +164,36 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"equal";
 }
 
-public void equal(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
-if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
-{
-    should.equal.numericCheck(expected, file, line);
-}
-
+///
 pure @safe unittest
 {
-    5.should.equal(5);
-    5.should.not.equal(6);
+    5.should.not.be.greater.equal(6);
+    5.should.be.greater.equal(5);
+    5.should.be.greater.equal(4);
+    5.should.not.be.greater.equal(6);
 }
 
+/**
+ * The word `.greater` tests that the left-hand side is greater than the expected value.
+ * It takes one parameter and terminates the phrase.
+ */
+public void greater(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    should.greater.numericCheck(expected, file, line);
+}
+
+///
+pure @safe unittest
+{
+    5.should.not.be.greater(6);
+    5.should.not.be.greater(5);
+    5.should.be.greater(4);
+}
+
+/**
+ * When called without parameters, `.greater` must be terminated by `.equal`, indicating `>=`.
+ */
 public auto greater(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -145,20 +203,25 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"greater";
 }
 
-public void greater(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+/**
+ * The word `.less` tests that the left-hand side is less than the expected value.
+ * It takes one parameter and terminates the phrase.
+ */
+public void less(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    should.greater.numericCheck(expected, file, line);
+    should.less.numericCheck(expected, file, line);
 }
 
+///
 pure @safe unittest
 {
-    5.should.not.be.greater.equal(6);
-    5.should.be.greater.equal(5);
-    5.should.be.greater.equal(4);
-    5.should.not.be.greater.equal(6);
+    5.should.be.less(6);
 }
 
+/**
+ * When called without parameters, `.less` must be terminated by `.equal`, indicating `<=`.
+ */
 public auto less(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -166,17 +229,6 @@ if (isInstanceOf!(ShouldType, Should))
     should.requireWord!"be".before!"less";
 
     return should.addWord!"less";
-}
-
-public void less(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
-if (isInstanceOf!(ShouldType, Should))
-{
-    should.less.numericCheck(expected, file, line);
-}
-
-pure @safe unittest
-{
-    5.should.be.less(6);
 }
 
 private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
@@ -240,12 +292,11 @@ public auto error(double value)
     return ErrorValue(value);
 }
 
-public auto approximately(Should)(Should should)
-if (isInstanceOf!(ShouldType, Should))
-{
-    return should.addWord!"approximately";
-}
-
+/**
+ * `.approximately` is a word indicating an approximate value comparison.
+ * When using .approximately, only the words `.be` and `.equal` may be used, though they may appear before or after.
+ * Each must be called with an additional parameter, `error = <float>`, indicating the amount of permissible error.
+ */
 public auto approximately(Should)(
     Should should, double expected, ErrorValue error,
     Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__
@@ -262,6 +313,17 @@ if (isInstanceOf!(ShouldType, Should))
     return should
         .addWord!"approximately"
         .approximateCheck(expected, error, file, line);
+}
+
+///
+unittest
+{
+    5.should.be.approximately(5.1, error = 0.11);
+    5.should.approximately.be(5.1, error = 0.11);
+    0.should.approximately.equal(1.0, error = 1.1);
+    0.should.approximately.equal(-1.0, error = 1.1);
+    0.should.not.approximately.equal(1, error = 0.1);
+    42.3.should.be.approximately(42.3, error = 1e-3);
 }
 
 public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
@@ -287,14 +349,10 @@ if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
     return should.approximateCheck(expected, error, file, line);
 }
 
-unittest
+public auto approximately(Should)(Should should)
+if (isInstanceOf!(ShouldType, Should))
 {
-    5.should.be.approximately(5.1, error = 0.11);
-    5.should.approximately.be(5.1, error = 0.11);
-    0.should.approximately.equal(1.0, error = 1.1);
-    0.should.approximately.equal(-1.0, error = 1.1);
-    0.should.not.approximately.equal(1, error = 0.1);
-    42.3.should.be.approximately(42.3, error = 1e-3);
+    return should.addWord!"approximately";
 }
 
 private void approximateCheck(Should, T)(Should should, T expected, ErrorValue error, string file, size_t line)

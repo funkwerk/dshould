@@ -9,6 +9,10 @@ public import dshould.stringcmp;
 public import dshould.thrown;
 
 // dispatch based on type
+/**
+ * The word `.equal` tests its parameter for equality with the left-hand side.
+ * If the parameters are strings, a colored diff is used.
+ */
 public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -28,6 +32,11 @@ if (isInstanceOf!(ShouldType, Should))
     return should.basic.equal(should);
 }
 
+/**
+ * The word `.throwA` (or `.throwAn`) expects its left-hand side expression to throw an exception.
+ * Instead of the cumbersome `.where.msg.should.equal("msg")`, the `msg` of the Exception to expect
+ * can be passed directly.
+ */
 public template throwA(T : Throwable)
 {
     void throwA(Should)(Should should, string msgTest, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
@@ -43,6 +52,7 @@ public template throwA(T : Throwable)
     }
 }
 
+/// ditto
 public alias throwAn = throwA;
 
 @("because defines reason for assertion")

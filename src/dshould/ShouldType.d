@@ -15,6 +15,10 @@ public struct Fence
 {
 }
 
+/**
+ * .should begins every fluent assertion in dshould. It takes no parameters on its own.
+ * Note that leaving a .should phrase unfinished will error at runtime.
+ */
 public auto should(T)(lazy T got) pure
 {
     T get() pure @safe
@@ -25,6 +29,11 @@ public auto should(T)(lazy T got) pure
     return ShouldType!(typeof(&get))(&get);
 }
 
+/**
+ * ShouldType is the base type passed between UFCS words in fluent assertions.
+ * It stores the left-hand side expression of the phrase, called "got" in errors,
+ * as well as the words making up the assertion phrase as template arguments.
+ */
 public struct ShouldType(G, string[] phrase = [])
 {
     import std.algorithm : canFind;
@@ -33,6 +42,9 @@ public struct ShouldType(G, string[] phrase = [])
 
     private int* refCount_ = null;
 
+    /**
+     * Add a word to the phrase. Can be chained.
+     */
     public auto addWord(string word)()
     {
         return ShouldType!(G, phrase ~ word)(this.got, this.refCount);
@@ -40,6 +52,10 @@ public struct ShouldType(G, string[] phrase = [])
 
     private this(G got) { this.got = got; this.refCount = 1; }
 
+    /**
+     * Manually initialize a new ShouldType value from an existing one's ref count.
+     * All ShouldTypes of one phrase must use the same reference counter.
+     */
     public this(G got, ref int refCount) @trusted
     in
     {
@@ -68,7 +84,15 @@ public struct ShouldType(G, string[] phrase = [])
         assert(this.refCount > 0, "unterminated should-chain!");
     }
 
-    public enum genCheck(string TestString, string[] ArgNames) = genCheckImpl(TestString, ArgNames);
+    /**
+     * Generate a mixin that checks a format expression for truth,
+     * throwing an exception with a detailed message when it fails.
+     * Params:
+     *   TestString = D code representing the expression to be tested as a string.
+     *                %s is used for variables.
+     *   ArgNames = The names of the local variables to be substituted for the format keys.
+     */
+    public static enum genCheck(string TestString, string[] ArgNames) = genCheckImpl(TestString, ArgNames);
 
     private static string genCheckImpl(string testString, string[] argNames)
     {
@@ -82,6 +106,13 @@ public struct ShouldType(G, string[] phrase = [])
         }}(testString, argStrings, testString, args);
     }
 
+    /**
+     * Checks a boolean condition for truth, throwing an exception when it fails.
+     * The components making up the exception string are passed lazily.
+     * The message has the form: "test failed {left} [because reason] {right}"
+     * For instance: "test failed: expected got.empty() because there should be nothing in there, but got [5]."
+     * In that case, left is ": expected got.empty()" and right is "but got [5]".
+     */
     public void check(bool condition, lazy string left, lazy string right, string file, size_t line) pure @safe
     {
         terminateChain;
@@ -92,6 +123,10 @@ public struct ShouldType(G, string[] phrase = [])
         }
     }
 
+    /**
+     * Mark that the semantic end of this phrase has been reached.
+     * If this is not called, the phrase will error on scope exit.
+     */
     public void terminateChain()
     {
         this.refCount = CHAIN_TERMINATED; // terminate chain, safe ref checker
@@ -99,6 +134,11 @@ public struct ShouldType(G, string[] phrase = [])
 
     private static enum isStringLiteral(T...) = T.length == 1 && is(typeof(T[0]) == string);
 
+    /**
+     * Allows to check that only a select list of words are permitted before the current word.
+     * On failure, an informative error is printed.
+     * Usage: should.allowOnlyWords!("word1", "word2").before!"newWord";
+     */
     public template allowOnlyWords(allowedWords...)
     if (allSatisfy!(isStringLiteral, allowedWords))
     {
@@ -111,6 +151,11 @@ public struct ShouldType(G, string[] phrase = [])
         }
     }
 
+    /**
+     * Allows to check that a specified word appeared in the phrase before the current word.
+     * On failure, an informative error is printed.
+     * Usage: should.requireWord!"word".before!"newWord";
+     */
     public template requireWord(string requiredWord)
     {
         void before(string newWord)()
@@ -122,6 +167,9 @@ public struct ShouldType(G, string[] phrase = [])
         }
     }
 
+    /**
+     * Evaluates to true if the given word exists in the current phrase.
+     */
     public enum hasWord(string word) = phrase.canFind(word);
 
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
@@ -140,7 +188,10 @@ public struct ShouldType(G, string[] phrase = [])
     }
 }
 
-// must be here due to https://issues.dlang.org/show_bug.cgi?id=18839
+/**
+ * Ensures that the given range is empty.
+ * Specified here due to https://issues.dlang.org/show_bug.cgi?id=18839
+ */
 public void empty_(Should)(Should should, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -164,6 +215,15 @@ if (isInstanceOf!(ShouldType, Should))
             check(got.empty, `: expected empty range`, format(", but got %s", got), file, line);
         }
     }
+}
+
+///
+unittest
+{
+    import dshould.basic;
+
+    [].should.be.empty;
+    [5].should.not.be.empty;
 }
 
 private class FluentExceptionImpl(T : Exception) : T
@@ -239,6 +299,12 @@ private class FluentExceptionImpl(T : Exception) : T
     }
 }
 
+/**
+ * When a fluent exception is thrown during the evaluation of the left-hand side of this word,
+ * then the reason for the test is set to the `reason` parameter.
+ *
+ * Usage: 2.should.be(2).because("math is sane");
+ */
 public T because(T)(lazy T value, string reason)
 {
     try
@@ -255,6 +321,10 @@ static if (__traits(compiles, { import unit_threaded.should : UnitTestException;
 {
     import unit_threaded.should : UnitTestException;
 
+    /**
+     * Indicates a fluent assert has failed, as well as what was tested, why it was tested, and what the outcome was.
+     * When unit_threaded is provided, FluentException is a unit_threaded test exception.
+     */
     public alias FluentException = FluentExceptionImpl!UnitTestException;
 }
 else

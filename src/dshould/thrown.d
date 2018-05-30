@@ -4,7 +4,15 @@ import std.format : format;
 import std.traits : CommonType;
 import std.typecons;
 import dshould.ShouldType;
+import dshould.basic : be, equal, not, should;
 
+/**
+ * The phrase `.should.throwA!Type` (or `.throwAn!Exception`, depending on grammar) expects the left-hand side expression
+ * to throw an exception of the given type.
+ * The exception is caught. If no exception was thrown, `.throwA` itself throws a `FluentException` to complain.
+ * If the left-hand side threw an exception, the word `.where` may be used to inspect this exception further.
+ * The meaning of `.throwA` may be negated with `.not`, in which case nothing is returned.
+ */
 public template throwA(T : Throwable)
 {
     auto throwA(Should)(Should should, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
@@ -94,12 +102,12 @@ public template throwA(T : Throwable)
     }
 }
 
+/// ditto
 public alias throwAn = throwA;
 
+///
 unittest
 {
-    import dshould.basic : be, equal, not, should;
-
     auto exception = new Exception("");
 
     /**
