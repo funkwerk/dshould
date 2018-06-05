@@ -279,7 +279,7 @@ private struct ErrorValue
 {
     @disable this();
 
-    private this(double value)
+    private this(double value) pure @safe
     {
         this.value = value;
     }
@@ -287,7 +287,7 @@ private struct ErrorValue
     double value;
 }
 
-public auto error(double value)
+public auto error(double value) pure @safe
 {
     return ErrorValue(value);
 }
