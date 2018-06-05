@@ -2,6 +2,7 @@ module dshould;
 
 import dshould.ShouldType;
 
+public import dshould.ShouldType : because, should;
 public import dshould.basic;
 public import dshould.contain;
 public import dshould.empty;
