@@ -367,13 +367,15 @@ private struct Levenshtein(Range)
 
     private float pathCost(EditOp proposedOp, size_t i, size_t j)
     {
-        import std.algorithm : countUntil, endsWith, equal, filter;
+        import std.algorithm : countUntil, endsWith, equal, filter, startsWith;
 
         alias step = (a, n) {
             auto cell = a[n - 1];
 
             if (cell.i == 0 && cell.j == 0)
             {
+                assert(cell.op == EditOp.none);
+
                 return cell;
             }
 
@@ -382,21 +384,20 @@ private struct Levenshtein(Range)
             return typeof(cell)(matrix(cell.i, cell.j).op, cell.i, cell.j);
         };
 
-        auto infiniteTrace = tuple!("op", "i", "j")(proposedOp, i, j).recurrence!step;
-        auto trace = infiniteTrace.takeExactly(infiniteTrace.countUntil!(a => a.i == 0 && a.j == 0)).map!(a => a.op);
+        auto trace = tuple!("op", "i", "j")(proposedOp, i, j).recurrence!step.map!(a => a.op);
         auto traceInsert = trace.filter!(op => op == EditOp.insert || op == EditOp.none);
         auto traceRemove = trace.filter!(op => op == EditOp.remove || op == EditOp.none);
 
         // significantly penalize orphaned "no change" lines
         alias orphan = op => only(op, EditOp.none, op);
         const orphanPathCost =
-            traceInsert.take(3).equal(orphan(EditOp.insert)) ? orphanCost : 0 +
-            traceRemove.take(3).equal(orphan(EditOp.remove)) ? orphanCost : 0;
+            traceInsert.startsWith(orphan(EditOp.insert)) ? orphanCost : 0 +
+            traceRemove.startsWith(orphan(EditOp.remove)) ? orphanCost : 0;
 
         // slightly penalize mode changes, to avoid pathologies arising from distant matches
         const pathChangesModeCost =
-            traceInsert.take(2).equal(only(EditOp.none, EditOp.insert)) ? modeChangeCost : 0 +
-            traceRemove.take(2).equal(only(EditOp.none, EditOp.remove)) ? modeChangeCost : 0;
+            traceInsert.startsWith(only(EditOp.none, EditOp.insert)) ? modeChangeCost : 0 +
+            traceRemove.startsWith(only(EditOp.none, EditOp.remove)) ? modeChangeCost : 0;
 
         return orphanPathCost + pathChangesModeCost;
     }
@@ -473,14 +474,14 @@ private struct Levenshtein(Range)
 
     private void initMatrix()
     {
-        this.matrixData[] = Cell(0, EditOp.insert);
+        this.matrixData[] = Cell(0, EditOp.none);
 
-        foreach (r; 0 .. rows)
+        foreach (r; 1 .. rows)
         {
             this.matrix(r, 0) = Cell(r * deletionIncrement, EditOp.remove);
         }
 
-        foreach (c; 0 .. cols)
+        foreach (c; 1 .. cols)
         {
             this.matrix(0, c) = Cell(c * insertionIncrement, EditOp.insert);
         }
