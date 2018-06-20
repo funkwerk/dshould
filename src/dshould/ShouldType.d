@@ -173,7 +173,10 @@ public struct ShouldType(G, string[] phrase = [])
     public enum hasWord(string word) = phrase.canFind(word);
 
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
-    public auto empty()() { return this.empty_; }
+    public auto empty()(Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+    {
+        return this.empty_(Fence(), file, line);
+    }
 
     private enum CHAIN_TERMINATED = int.max;
 
