@@ -56,9 +56,11 @@ and green indicates unexpected lines.
 
 The words `throwA` and `throwAn` are identical; their only difference is grammatical.
 
-The expression of the provided type is caught and returned, and may be accessed with the property `.where`.
+The exception of the given type is caught and returned, and may be accessed with the property `.where`.
 
     expression.should.throwAn!Exception.where.msg.should.equal("Assertion failed!");
+
+When negated with `not`, `throwA` returns `void`.
 
 # Extensions
 
