@@ -51,8 +51,8 @@ if (isInstanceOf!(ShouldType, Should))
         }
 
         throw new FluentException(
-            "test failed",
-            format!`: expected '%s', but got '%s'`(original, diff),
+            format!`'%s'`(original),
+            format!`'%s'`(diff),
             file, line
         );
     }
