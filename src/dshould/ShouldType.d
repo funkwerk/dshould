@@ -85,31 +85,9 @@ public struct ShouldType(G, string[] phrase = [])
     }
 
     /**
-     * Generate a mixin that checks a format expression for truth,
-     * throwing an exception with a detailed message when it fails.
-     * Params:
-     *   TestString = D code representing the expression to be tested as a string.
-     *                %s is used for variables.
-     *   ArgNames = The names of the local variables to be substituted for the format keys.
-     */
-    public static enum genCheck(string TestString, string[] ArgNames) = genCheckImpl(TestString, ArgNames);
-
-    private static string genCheckImpl(string testString, string[] argNames)
-    {
-        auto args = format!"%-(%s, %)"(argNames);
-        auto argStrings = format!"%(%s, %)"(argNames);
-
-        return format!q{{
-            import std.format : format;
-
-            check(mixin(format!q{%s}(%s)), format("%s", %s), null, file, line);
-        }}(testString, argStrings, testString, args);
-    }
-
-    /**
      * Checks a boolean condition for truth, throwing an exception when it fails.
      * The components making up the exception string are passed lazily.
-     * The message has the form: "Test failed: expected {expected}[ because reason][, but got {butGot}]"
+     * The message has the form: "Test failed: expected {expected}[ because reason], but got {butGot}"
      * For instance: "Test failed: expected got.empty() because there should be nothing in there, but got [5]."
      * In that case, `expected` is "got.empty()" and `butGot` is "[5]".
      */
@@ -211,11 +189,11 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (hasWord!"not")
         {
-            check(!got.empty, `nonempty range`, null, file, line);
+            check(!got.empty, "nonempty range", format("%s", got), file, line);
         }
         else
         {
-            check(got.empty, `empty range`, format("%s", got), file, line);
+            check(got.empty, "empty range", format("%s", got), file, line);
         }
     }
 }
@@ -244,6 +222,7 @@ private class FluentExceptionImpl(T : Exception) : T
     in
     {
         assert(!expectedPart.empty);
+        assert(!butGotPart.empty);
     }
     do
     {
@@ -257,6 +236,7 @@ private class FluentExceptionImpl(T : Exception) : T
     in
     {
         assert(!expectedPart.empty);
+        assert(!butGotPart.empty);
     }
     do
     {

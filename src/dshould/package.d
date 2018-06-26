@@ -113,7 +113,7 @@ unittest
 unittest
 {
     [].should.not.be.empty
-        .should.throwA!FluentException("Test failed: expected nonempty range");
+        .should.throwA!FluentException("Test failed: expected nonempty range, but got []");
 
     [5].should.be.empty
         .should.throwA!FluentException("Test failed: expected empty range, but got [5]");

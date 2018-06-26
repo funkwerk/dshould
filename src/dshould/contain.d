@@ -104,6 +104,7 @@ private void checkContain(Should, T)(Should should, T expected, string file, siz
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.algorithm : any, all, canFind;
+    import std.format : format;
     import std.range : ElementType, save;
 
     with (should)
@@ -120,22 +121,38 @@ if (isInstanceOf!(ShouldType, Should))
             {
                 static if (hasWord!"not")
                 {
-                    mixin(genCheck!("%s.any!(a => a != %s)", ["got", "expected"]));
+                    check(
+                        got.any!(a => a != expected),
+                        format!"array containing values other than %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
                 else
                 {
-                    mixin(genCheck!("%s.all!(a => a == %s)", ["got", "expected"]));
+                    check(
+                        got.all!(a => a == expected),
+                        format!"array containing only the value %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
             }
             else
             {
                 static if (hasWord!"not")
                 {
-                    mixin(genCheck!("!%s.save.canFind(%s)", ["got", "expected"]));
+                    check(
+                        !got.save.canFind(expected),
+                        format!"array not containing %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
                 else
                 {
-                    mixin(genCheck!("%s.save.canFind(%s)", ["got", "expected"]));
+                    check(
+                        got.save.canFind(expected),
+                        format!"array containing %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
             }
         }
@@ -145,33 +162,57 @@ if (isInstanceOf!(ShouldType, Should))
             {
                 static if (hasWord!"not")
                 {
-                    mixin(genCheck!("!%s.all!(a => %s.save.canFind(a))", ["got", "expected"]));
+                    check(
+                        !got.all!(a => expected.save.canFind(a)),
+                        format!"array containing values other than %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
                 else
                 {
-                    mixin(genCheck!("%s.all!(a => %s.save.canFind(a))", ["got", "expected"]));
+                    check(
+                        got.all!(a => expected.save.canFind(a)),
+                        format!"array containing only the values %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
             }
             else static if (hasWord!"all")
             {
                 static if (hasWord!"not")
                 {
-                    mixin(genCheck!("!%s.all!(a => %s.save.canFind(a))", ["expected", "got"]));
+                    check(
+                        !expected.all!(a => got.save.canFind(a)),
+                        format!"array not containing every value in %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
                 else
                 {
-                    mixin(genCheck!("%s.all!(a => %s.save.canFind(a))", ["expected", "got"]));
+                    check(
+                        expected.all!(a => got.save.canFind(a)),
+                        format!"array containing every value in %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
             }
             else static if (hasWord!"any")
             {
                 static if (hasWord!"not")
                 {
-                    mixin(genCheck!("!%s.any!(a => %s.save.canFind(a))", ["expected", "got"]));
+                    check(
+                        !expected.any!(a => got.save.canFind(a)),
+                        format!"array not containing any value in %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
                 else
                 {
-                    mixin(genCheck!("%s.any!(a => %s.save.canFind(a))", ["expected", "got"]));
+                    check(
+                        expected.any!(a => got.save.canFind(a)),
+                        format!"array containing any value of %s"(expected),
+                        format!"%s"(got),
+                        file, line);
                 }
             }
             else
