@@ -6,6 +6,8 @@ Note that these asserts are only examples; for instance, the word `not` can be u
 
 When in doubt, use English grammar. If an intuitive combination of words does not work, please file a bug report.
 
+When a test fails, the message is always a variation of "Expected [right], but got [left]".
+
 # Basic use
 
     value.should.equal(value);
@@ -102,3 +104,5 @@ The `should` parameter has the following properties:
  * `should.got()` to evaluate the left-hand side of the `should` sentence, ie. the expression appearing before `.should`.
 
  * `check(condition, expectedMessage, butGotMessage, file, line)` to actually check the `should` condition.
+ When the condition is violated, a FluentException is thrown, whose `msg` has the form:
+ "Test failed: expected {expectedMessage}, but got {butGotMessage}".

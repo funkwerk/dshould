@@ -74,7 +74,7 @@ unittest
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException("test failed: expected 3, but got 2");
+    2.should.be(3).should.throwA!FluentException("Test failed: expected 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
@@ -83,50 +83,50 @@ unittest
     Object obj;
 
     obj.should.not.be(null)
-        .should.throwA!FluentException("test failed: expected non-null, but got null");
+        .should.throwA!FluentException("Test failed: expected non-null, but got null");
 
     obj = new Object;
 
     obj.should.be(null)
-        .should.throwA!FluentException("test failed: expected null, but got object.Object");
+        .should.throwA!FluentException("Test failed: expected null, but got object.Object");
 
     obj.should.not.be(obj)
         .should.throwA!FluentException(
-            "test failed: expected different reference than object.Object, but got same.");
+            "Test failed: expected different reference than object.Object, but got same reference");
 
     obj.should.be(new Object)
         .should.throwA!FluentException(
-            "test failed: expected same reference as object.Object, but got object.Object");
+            "Test failed: expected same reference as object.Object, but got object.Object");
 }
 
 @("prints informative errors for inequalities")
 unittest
 {
     2.should.be.greater.equal(5)
-        .should.throwA!FluentException("test failed: expected value >= 5, but got 2");
+        .should.throwA!FluentException("Test failed: expected value >= 5, but got 2");
 
     2.should.not.be.less.equal(5)
-        .should.throwA!FluentException("test failed: expected value not <= 5, but got 2");
+        .should.throwA!FluentException("Test failed: expected value not <= 5, but got 2");
 }
 
 @("prints informative errors for range emptiness")
 unittest
 {
     [].should.not.be.empty
-        .should.throwA!FluentException("test failed: expected nonempty range");
+        .should.throwA!FluentException("Test failed: expected nonempty range");
 
     [5].should.be.empty
-        .should.throwA!FluentException("test failed: expected empty range, but got [5]");
+        .should.throwA!FluentException("Test failed: expected empty range, but got [5]");
 }
 
 @("prints informative errors for approximate checks")
 unittest
 {
     2.should.approximately.be(4, error=0.5)
-        .should.throwA!FluentException("test failed: expected 4 ± 0.5, but got 2");
+        .should.throwA!FluentException("Test failed: expected 4 ± 0.5, but got 2");
 
     (2.4).should.not.approximately.be(2, error=0.5)
-        .should.throwA!FluentException("test failed: expected value outside 2 ± 0.5, but got 2.4");
+        .should.throwA!FluentException("Test failed: expected value outside 2 ± 0.5, but got 2.4");
 }
 
 @("asserts when forgetting to terminate should expression")

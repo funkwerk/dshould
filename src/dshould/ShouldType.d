@@ -102,24 +102,24 @@ public struct ShouldType(G, string[] phrase = [])
         return format!q{{
             import std.format : format;
 
-            check(mixin(format!q{%s}(%s)), format(": expected %s", %s), null, file, line);
+            check(mixin(format!q{%s}(%s)), format("%s", %s), null, file, line);
         }}(testString, argStrings, testString, args);
     }
 
     /**
      * Checks a boolean condition for truth, throwing an exception when it fails.
      * The components making up the exception string are passed lazily.
-     * The message has the form: "test failed {left} [because reason] {right}"
-     * For instance: "test failed: expected got.empty() because there should be nothing in there, but got [5]."
-     * In that case, left is ": expected got.empty()" and right is "but got [5]".
+     * The message has the form: "Test failed: expected {expected}[ because reason][, but got {butGot}]"
+     * For instance: "Test failed: expected got.empty() because there should be nothing in there, but got [5]."
+     * In that case, `expected` is "got.empty()" and `butGot` is "[5]".
      */
-    public void check(bool condition, lazy string left, lazy string right, string file, size_t line) pure @safe
+    public void check(bool condition, lazy string expected, lazy string butGot, string file, size_t line) pure @safe
     {
         terminateChain;
 
         if (!condition)
         {
-            throw new FluentException("test failed" ~ left, right, file, line);
+            throw new FluentException(expected, butGot, file, line);
         }
     }
 
@@ -211,11 +211,11 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (hasWord!"not")
         {
-            check(!got.empty, `: expected nonempty range`, null, file, line);
+            check(!got.empty, `nonempty range`, null, file, line);
         }
         else
         {
-            check(got.empty, `: expected empty range`, format(", but got %s", got), file, line);
+            check(got.empty, `empty range`, format("%s", got), file, line);
         }
     }
 }
@@ -231,38 +231,38 @@ unittest
 
 private class FluentExceptionImpl(T : Exception) : T
 {
-    private const string leftPart = null; // before reason
+    private const string expectedPart = null; // before reason
     public const string reason = null;
-    private const string rightPart = null; // after reason
+    private const string butGotPart = null; // after reason
 
     invariant
     {
-        assert(!this.leftPart.empty);
+        assert(!this.expectedPart.empty);
     }
 
-    public this(string leftPart, string rightPart, string file, size_t line) pure @safe
+    public this(string expectedPart, string butGotPart, string file, size_t line) pure @safe
     in
     {
-        assert(!leftPart.empty);
+        assert(!expectedPart.empty);
     }
     do
     {
-        this.leftPart = leftPart;
-        this.rightPart = rightPart;
+        this.expectedPart = expectedPart;
+        this.butGotPart = butGotPart;
 
         super(combinedMessage, file, line);
     }
 
-    public this(string leftPart, string reason, string rightPart, string file, size_t line) pure @safe
+    public this(string expectedPart, string reason, string butGotPart, string file, size_t line) pure @safe
     in
     {
-        assert(!leftPart.empty);
+        assert(!expectedPart.empty);
     }
     do
     {
-        this.leftPart = leftPart;
+        this.expectedPart = expectedPart;
         this.reason = reason;
-        this.rightPart = rightPart;
+        this.butGotPart = butGotPart;
 
         super(combinedMessage, file, line);
     }
@@ -274,28 +274,28 @@ private class FluentExceptionImpl(T : Exception) : T
     }
     do
     {
-        this.leftPart = msg;
+        this.expectedPart = msg;
 
         super(combinedMessage, file, line);
     }
 
     public FluentException because(string reason) pure @safe
     {
-        return new FluentException(this.leftPart, reason, this.rightPart, this.file, this.line);
+        return new FluentException(this.expectedPart, reason, this.butGotPart, this.file, this.line);
     }
 
     private @property string combinedMessage() pure @safe
     {
-        string message = this.leftPart;
+        string message = format!`Test failed: expected %s`(this.expectedPart);
 
         if (!this.reason.empty)
         {
             message ~= format!` because %s`(this.reason);
         }
 
-        if (!this.rightPart.empty)
+        if (!this.butGotPart.empty)
         {
-            message ~= this.rightPart;
+            message ~= format!`, but got %s`(this.butGotPart);
         }
 
         return message;

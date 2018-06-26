@@ -41,14 +41,14 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
             static if (isNullType)
             {
-                check(got !is null, ": expected non-null", ", but got null", file, line);
+                check(got !is null, "non-null", "null", file, line);
             }
             else
             {
                 check(
                     got !is expected,
-                    format(": expected %s%s", refInfo, expected.quote),
-                    isReferenceType ? ", but got same." : "but got it.",
+                    format("%s%s", refInfo, expected.quote),
+                    isReferenceType ? "same reference" : "it",
                     file, line
                 );
             }
@@ -59,14 +59,14 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 
             static if (is(T == typeof(null)))
             {
-                check(got is null, ": expected null", format(", but got %s", got.quote), file, line);
+                check(got is null, "null", format("%s", got.quote), file, line);
             }
             else
             {
                 check(
                     got is expected,
-                    format(": expected %s%s", refInfo, expected.quote),
-                    format(", but got %s", got.quote),
+                    format("%s%s", refInfo, expected.quote),
+                    format("%s", got.quote),
                     file, line
                 );
             }
@@ -262,8 +262,8 @@ if (isInstanceOf!(ShouldType, Should))
 
         check(
             mixin(format!checkString("got", "expected")),
-            format(": expected value %s", message.format(expected.quote)),
-            format(", but got %s", got.quote),
+            format("value %s", message.format(expected.quote)),
+            format("%s", got.quote),
             file, line
         );
     }
@@ -369,8 +369,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 abs(expected - got) >= error.value,
-                format(": expected value outside %s ± %s", expected, error.value),
-                format(", but got %s", got),
+                format("value outside %s ± %s", expected, error.value),
+                format("%s", got),
                 file, line
             );
         }
@@ -378,8 +378,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 abs(expected - got) < error.value,
-                format(": expected %s ± %s", expected, error.value),
-                format(", but got %s", got),
+                format("%s ± %s", expected, error.value),
+                format("%s", got),
                 file, line
             );
         }
