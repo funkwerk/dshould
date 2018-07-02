@@ -95,6 +95,15 @@ unittest
     (cast(void delegate()) null).should.be(null);
 }
 
+unittest
+{
+    const(string)[][] a = [["a"]];
+    string[][] b = [["a"]];
+
+    a.should.equal(b);
+    b.should.equal(a);
+}
+
 /**
  * When called without parameters, `.be` is a filler word for `.greater`, `.less` or `.equal`.
  */
@@ -231,7 +240,7 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"less";
 }
 
-private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
+private void numericCheck(Should, T)(Should should, const T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.format : format;
@@ -243,7 +252,7 @@ if (isInstanceOf!(ShouldType, Should))
         enum lessPart = hasWord!"less" ? "<" : "";
         enum greaterPart = hasWord!"greater" ? ">" : "";
 
-        auto got = should.got();
+        const got = should.got();
 
         enum comparison = lessPart ~ greaterPart;
 
@@ -251,17 +260,17 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (should.hasWord!"not")
         {
-            enum checkString = "!(%s " ~ combined ~ " %s)";
+            enum checkString = "!(got " ~ combined ~ " expected)";
             enum message = "not " ~ combined ~ " %s";
         }
         else
         {
-            enum checkString = "%s " ~ combined ~ " %s";
+            enum checkString = "got " ~ combined ~ " expected";
             enum message = combined ~ " %s";
         }
 
         check(
-            mixin(format!checkString("got", "expected")),
+            mixin(checkString),
             format("value %s", message.format(expected.quote)),
             format("%s", got.quote),
             file, line
