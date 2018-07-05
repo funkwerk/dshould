@@ -289,12 +289,12 @@ private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepP
     return diff.data.nullable;
 }
 
-private auto red(T)(T text)
+package auto red(T)(T text)
 {
     return RED_CODE ~ text ~ CLEAR_CODE;
 }
 
-private auto green(T)(T text)
+package auto green(T)(T text)
 {
     return GREEN_CODE ~ text ~ CLEAR_CODE;
 }

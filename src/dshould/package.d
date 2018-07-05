@@ -17,9 +17,16 @@ public import dshould.thrown;
 public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    static if (is(typeof(should.got()) == string) && is(T == string) && !Should.hasWord!"not")
+    import std.json : JSONValue;
+
+    static if (is(typeof(should.got()) == string) && is(T == string) && !should.hasWord!"not")
     {
         dshould.stringcmp.equal(should, value, Fence(), file, line);
+    }
+    else static if (is(T == JSONValue) && is(typeof(should.got()) == JSONValue) && !should.hasWord!"not")
+    {
+        should.terminateChain;
+        should.got().toPrettyString.should.equal(value.toPrettyString);
     }
     else
     {
@@ -117,6 +124,23 @@ unittest
 
     [5].should.be.empty
         .should.throwA!FluentException("Test failed: expected empty range, but got [5]");
+}
+
+@("prettyprints json values for comparison")
+unittest
+{
+    import std.json : parseJSON;
+
+    const expected = `Test failed: expected ' {
+` ~ red(`-    "b": "Bar"`) ~ `
+ }
+', but got '
+ {
+` ~ green(`+    "a": "Foo"`) ~ `
+ }'`;
+
+    parseJSON(`{"a": "Foo"}`).should.equal(parseJSON(`{"b": "Bar"}`))
+        .should.throwA!FluentException(expected);
 }
 
 @("prints informative errors for approximate checks")
