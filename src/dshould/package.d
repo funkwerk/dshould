@@ -30,7 +30,7 @@ if (isInstanceOf!(ShouldType, Should))
 public auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
-    return should.basic.equal(should);
+    return dshould.basic.equal(should);
 }
 
 /**
