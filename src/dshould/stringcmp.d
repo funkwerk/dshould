@@ -1,6 +1,6 @@
 module dshould.stringcmp;
 
-import std.algorithm : EditOp, map;
+import std.algorithm : map;
 import std.format : format;
 import std.range;
 import std.typecons;
@@ -101,7 +101,7 @@ unittest
 @("tries to not change diff mode too often")
 unittest
 {
-    const cleanDiff = `method="` ~ GREEN_CODE ~ `multiply` ~ CLEAR_CODE ~ `"`;
+    const cleanDiff = `method="` ~ green(`multiply`) ~ `"`;
 
     `method="update"`.oneLineDiff(`method="multiply"`).target.should.equal(cleanDiff);
 }
@@ -184,6 +184,19 @@ unittest
     (diff.original.join("\n") ~ diff.target.join("\n")).should.equal(patchTextOriginal ~ patchTextTarget);
 }
 
+@("supports comparison of large strings")
+unittest
+{
+    import std.string : join, split;
+
+    // given
+    const repetitions = 500/"Hello World".length;
+    const originalText = `Hello World`.repeat(repetitions).join ~ `AAA` ~ `Hello World`.repeat(repetitions).join;
+    const modifiedText = `Hello World`.repeat(repetitions).join ~ `BBB` ~ `Hello World`.repeat(repetitions).join;
+
+    originalText.oneLineDiff(modifiedText); // should terminate in an acceptable timespan
+}
+
 // TODO bracket crossing cost
 private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) @trusted
 {
@@ -201,7 +214,7 @@ private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepP
     auto levenshtein = Levenshtein!T(expected, text);
     const path = levenshtein.reconstructPath;
 
-    if (path.count!(a => a != EditOp.none) > text.length)
+    if (path.count!(a => a != levenshtein.EditOp.Type.keep) > text.length)
     {
         return Nullable!T.init; // no diff view, too different
     }
@@ -252,21 +265,19 @@ private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepP
     {
         final switch (editOp)
         {
-            case EditOp.none:
+            case levenshtein.EditOp.Type.keep:
                 same(text.front);
                 text = text.dropOne;
                 expected = expected.dropOne;
                 break;
-            case EditOp.insert:
+            case levenshtein.EditOp.Type.insert:
                 add(text.front);
                 text = text.dropOne;
                 break;
-            case EditOp.remove:
+            case levenshtein.EditOp.Type.remove:
                 remove(expected.front);
                 expected = expected.dropOne;
                 break;
-            case EditOp.substitute:
-                assert(false);
         }
     }
 
@@ -325,12 +336,12 @@ private struct Levenshtein(Range)
             foreach (j; 1 .. this.cols)
             {
                 auto costInsertion = this.matrix(i, j - 1).cost + insertionIncrement
-                    + pathCost(EditOp.insert, i, j);
+                    + pathCost(EditOp.insert(1), i, j);
                 auto costDeletion = this.matrix(i - 1, j).cost + deletionIncrement
-                    + pathCost(EditOp.remove, i, j);
+                    + pathCost(EditOp.remove(1), i, j);
                 auto costNone = (sFront != tCurrent.front)
                     ? float.infinity
-                    : (this.matrix(i - 1, j - 1).cost + pathCost(EditOp.none, i, j));
+                    : (this.matrix(i - 1, j - 1).cost + pathCost(EditOp.keep(1), i, j));
 
                 tCurrent.popFront();
 
@@ -340,22 +351,22 @@ private struct Levenshtein(Range)
                 {
                     if (costNone <= costInsertion)
                     {
-                        cell = Cell(costNone, EditOp.none);
+                        cell = Cell(costNone, EditOp.keep(matrix(i - 1, j - 1).op));
                     }
                     else
                     {
-                        cell = Cell(costInsertion, EditOp.insert);
+                        cell = Cell(costInsertion, EditOp.insert(matrix(i, j - 1).op));
                     }
                 }
                 else
                 {
                     if (costDeletion <= costInsertion)
                     {
-                        cell = Cell(costDeletion, EditOp.remove);
+                        cell = Cell(costDeletion, EditOp.remove(matrix(i - 1, j).op));
                     }
                     else
                     {
-                        cell = Cell(costInsertion, EditOp.insert);
+                        cell = Cell(costInsertion, EditOp.insert(matrix(i, j - 1).op));
                     }
                 }
 
@@ -365,48 +376,72 @@ private struct Levenshtein(Range)
         }
     }
 
-    private float pathCost(EditOp proposedOp, size_t i, size_t j)
+    private float pathCost(EditOp proposedOp, size_t i, size_t j) @nogc
     {
         import std.algorithm : countUntil, endsWith, equal, filter, startsWith;
 
-        alias step = (a, n) {
+        enum Path
+        {
+            insertPath,
+            removePath,
+        }
+
+        alias step(Path path) = (a, n) {
             auto cell = a[n - 1];
 
             if (cell.i == 0 && cell.j == 0)
             {
-                assert(cell.op == EditOp.none);
+                assert(cell.op.type == EditOp.Type.keep && cell.op.count == 0);
 
                 return cell;
             }
 
-            moveByOp(cell.op, cell.i, cell.j);
+            if (path == Path.insertPath && cell.op.type == EditOp.Type.remove
+                || path == path.removePath && cell.op.type == EditOp.Type.insert
+            )
+            {
+                cell.self.skipByOp(cell.op, cell.i, cell.j);
+            }
+            else
+            {
+                cell.self.moveByOp(cell.op, cell.i, cell.j);
+            }
 
-            return typeof(cell)(matrix(cell.i, cell.j).op, cell.i, cell.j);
+            return typeof(cell)(cell.self, cell.self.matrix(cell.i, cell.j).op, cell.i, cell.j);
         };
 
-        auto trace = tuple!("op", "i", "j")(proposedOp, i, j).recurrence!step.map!(a => a.op);
-        auto traceInsert = trace.filter!(op => op == EditOp.insert || op == EditOp.none);
-        auto traceRemove = trace.filter!(op => op == EditOp.remove || op == EditOp.none);
+        alias stepInsertPath = step!(Path.insertPath); // path where there's never more than one remove in a row
+        alias stepRemovePath = step!(Path.removePath); // path where there's never more than one insert in a row
+
+        auto traceInsert = tuple!("self", "op", "i", "j")(&this, proposedOp, i, j)
+            .recurrence!stepInsertPath
+            .map!(a => a.op.type)
+            .filter!(op => op != EditOp.Type.remove);
+
+        auto traceRemove = tuple!("self", "op", "i", "j")(&this, proposedOp, i, j)
+            .recurrence!stepRemovePath
+            .map!(a => a.op.type)
+            .filter!(op => op != EditOp.Type.insert);
 
         // significantly penalize orphaned "no change" lines
-        alias orphan = op => only(op, EditOp.none, op);
+        alias orphan = op => only(op, EditOp.Type.keep, op);
         const orphanPathCost =
-            traceInsert.startsWith(orphan(EditOp.insert)) ? orphanCost : 0 +
-            traceRemove.startsWith(orphan(EditOp.remove)) ? orphanCost : 0;
+            traceInsert.startsWith(orphan(EditOp.Type.insert)) ? orphanCost : 0 +
+            traceRemove.startsWith(orphan(EditOp.Type.remove)) ? orphanCost : 0;
 
         // slightly penalize mode changes, to avoid pathologies arising from distant matches
         const pathChangesModeCost =
-            traceInsert.startsWith(only(EditOp.none, EditOp.insert)) ? modeChangeCost : 0 +
-            traceRemove.startsWith(only(EditOp.none, EditOp.remove)) ? modeChangeCost : 0;
+            traceInsert.startsWith(only(EditOp.Type.keep, EditOp.Type.insert)) ? modeChangeCost : 0 +
+            traceRemove.startsWith(only(EditOp.Type.keep, EditOp.Type.remove)) ? modeChangeCost : 0;
 
         return orphanPathCost + pathChangesModeCost;
     }
 
-    public EditOp[] reconstructPath()
+    public EditOp.Type[] reconstructPath()
     {
         import std.algorithm.mutation : reverse;
 
-        EditOp[] result;
+        EditOp.Type[] result;
         size_t i = this.rows - 1;
         size_t j = this.cols - 1;
 
@@ -414,8 +449,11 @@ private struct Levenshtein(Range)
         {
             const op = matrix(i, j).op;
 
-            result ~= op;
-            moveByOp(op, i, j);
+            assert(op.count > 0);
+
+            result ~= op.type.repeat(op.count).array;
+
+            skipByOp(op, i, j);
         }
         reverse(result);
         return result;
@@ -425,24 +463,77 @@ private struct Levenshtein(Range)
     in
     {
         assert(i > 0 || j > 0);
+        assert(op.count > 0);
     }
     do
     {
-        final switch (op)
+        final switch (op.type)
         {
-            case EditOp.none:
+            case EditOp.Type.keep:
                 i--;
                 j--;
                 break;
-            case EditOp.insert:
+            case EditOp.Type.insert:
                 j--;
                 break;
-            case EditOp.remove:
+            case EditOp.Type.remove:
                 i--;
                 break;
-            case EditOp.substitute:
-                assert(false);
         }
+    }
+
+    private void skipByOp(EditOp op, ref size_t i, ref size_t j)
+    {
+        final switch (op.type)
+        {
+            case EditOp.Type.keep:
+                assert(i >= op.count && j >= op.count);
+
+                i -= op.count;
+                j -= op.count;
+                break;
+            case EditOp.Type.insert:
+                assert(j >= op.count);
+
+                j -= op.count;
+                break;
+            case EditOp.Type.remove:
+                assert(i >= op.count);
+
+                i -= op.count;
+                break;
+        }
+    }
+
+    struct EditOp
+    {
+        enum Type
+        {
+            insert,
+            remove,
+            keep,
+        }
+
+        template constructByType(Type type)
+        {
+            static EditOp constructByType(size_t count)
+            {
+                return EditOp(type, count);
+            }
+
+            static EditOp constructByType(EditOp previousOp)
+            {
+                return EditOp(type, (type == previousOp.type) ? (previousOp.count + 1) : 1);
+            }
+        }
+
+        alias insert = constructByType!(Type.insert);
+        alias remove = constructByType!(Type.remove);
+        alias keep = constructByType!(Type.keep);
+
+        Type type;
+
+        size_t count; // number of times this op is repeated on the best path
     }
 
     private enum deletionIncrement = 1;
@@ -474,16 +565,16 @@ private struct Levenshtein(Range)
 
     private void initMatrix()
     {
-        this.matrixData[] = Cell(0, EditOp.none);
+        this.matrixData[] = Cell(0, EditOp.keep(0));
 
         foreach (r; 1 .. rows)
         {
-            this.matrix(r, 0) = Cell(r * deletionIncrement, EditOp.remove);
+            this.matrix(r, 0) = Cell(r * deletionIncrement, EditOp.remove(r));
         }
 
         foreach (c; 1 .. cols)
         {
-            this.matrix(0, c) = Cell(c * insertionIncrement, EditOp.insert);
+            this.matrix(0, c) = Cell(c * insertionIncrement, EditOp.insert(c));
         }
     }
 }
