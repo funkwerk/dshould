@@ -378,50 +378,100 @@ private struct Levenshtein(Range)
 
     private float pathCost(EditOp proposedOp, size_t i, size_t j) @nogc
     {
-        import std.algorithm : countUntil, endsWith, equal, filter, startsWith;
+        import std.algorithm : startsWith;
 
         enum Path
         {
-            insertPath,
-            removePath,
+            insert,
+            remove,
         }
 
-        alias step(Path path) = (a, n) {
-            auto cell = a[n - 1];
+        struct PathRange(Path path)
+        {
+            Levenshtein* self;
 
-            if (cell.i == 0 && cell.j == 0)
+            size_t i;
+            size_t j;
+
+            EditOp op;
+
+            @property EditOp.Type front() const
+            in
             {
-                assert(cell.op.type == EditOp.Type.keep && cell.op.count == 0);
+                final switch (path)
+                {
+                    case Path.insert:
+                        assert(op.type != EditOp.Type.remove);
+                        break;
+                    case Path.remove:
+                        assert(op.type != EditOp.Type.insert);
+                        break;
+                }
+            }
+            do
+            {
 
-                return cell;
+                return this.op.type;
             }
 
-            if (path == Path.insertPath && cell.op.type == EditOp.Type.remove
-                || path == path.removePath && cell.op.type == EditOp.Type.insert
-            )
+            bool empty()
             {
-                cell.self.skipByOp(cell.op, cell.i, cell.j);
+                if (this.op.type == EditOp.Type.keep && this.op.count == 0)
+                {
+                    assert(this.i == 0 && this.j == 0);
+
+                    return true;
+                }
+
+                assert(this.op.count > 0);
+
+                return false;
             }
-            else
+
+            // advance until front is again on the path
+            void advance()
             {
-                cell.self.moveByOp(cell.op, cell.i, cell.j);
+                while (true)
+                {
+                    final switch (path)
+                    {
+                        case Path.insert:
+                            if (this.op.type != EditOp.Type.remove)
+                            {
+                                return;
+                            }
+                            break;
+                        case Path.remove:
+                            if (this.op.type != EditOp.Type.insert)
+                            {
+                                return;
+                            }
+                            break;
+                    }
+
+                    this.self.skipByOp(this.op, this.i, this.j);
+                    this.op = this.self.matrix(this.i, this.j).op;
+                }
             }
 
-            return typeof(cell)(cell.self, cell.self.matrix(cell.i, cell.j).op, cell.i, cell.j);
-        };
+            void popFront()
+            {
+                this.self.moveByOp(this.op, this.i, this.j);
+                this.op = this.self.matrix(this.i, this.j).op;
 
-        alias stepInsertPath = step!(Path.insertPath); // path where there's never more than one remove in a row
-        alias stepRemovePath = step!(Path.removePath); // path where there's never more than one insert in a row
+                advance;
+            }
+        }
 
-        auto traceInsert = tuple!("self", "op", "i", "j")(&this, proposedOp, i, j)
-            .recurrence!stepInsertPath
-            .map!(a => a.op.type)
-            .filter!(op => op != EditOp.Type.remove);
+        static assert(isInputRange!(PathRange!(Path.insert)));
+        static assert(isInputRange!(PathRange!(Path.remove)));
 
-        auto traceRemove = tuple!("self", "op", "i", "j")(&this, proposedOp, i, j)
-            .recurrence!stepRemovePath
-            .map!(a => a.op.type)
-            .filter!(op => op != EditOp.Type.insert);
+        auto traceInsert = PathRange!(Path.insert)(&this, i, j, proposedOp);
+        auto traceRemove = PathRange!(Path.remove)(&this, i, j, proposedOp);
+
+        // prepare for use
+        traceInsert.advance;
+        traceRemove.advance;
 
         // significantly penalize orphaned "no change" lines
         alias orphan = op => only(op, EditOp.Type.keep, op);
