@@ -18,12 +18,17 @@ public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string f
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.json : JSONValue;
+    import std.traits : Unqual;
 
     static if (is(typeof(should.got()) == string) && is(T == string) && !should.hasWord!"not")
     {
         dshould.stringcmp.equal(should, value, Fence(), file, line);
     }
-    else static if (is(T == JSONValue) && is(typeof(should.got()) == JSONValue) && !should.hasWord!"not")
+    else static if (
+        is(Unqual!T == JSONValue)
+        && is(Unqual!(typeof(should.got())) == JSONValue)
+        && !should.hasWord!"not"
+    )
     {
         should.terminateChain;
         should.got().toPrettyString.should.equal(value.toPrettyString);
@@ -139,7 +144,10 @@ unittest
 ` ~ green(`+    "a": "Foo"`) ~ `
  }'`;
 
-    parseJSON(`{"a": "Foo"}`).should.equal(parseJSON(`{"b": "Bar"}`))
+    const left = parseJSON(`{"a": "Foo"}`);
+    const right = parseJSON(`{"b": "Bar"}`);
+
+    left.should.equal(right)
         .should.throwA!FluentException(expected);
 }
 
