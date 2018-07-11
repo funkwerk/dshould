@@ -1,5 +1,6 @@
 module dshould.basic;
 
+import std.format : format;
 import std.string : empty;
 import dshould.ShouldType;
 public import dshould.ShouldType : should;
@@ -23,8 +24,6 @@ if (isInstanceOf!(ShouldType, Should))
 public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
-    import std.format : format;
-
     with (should)
     {
         allowOnlyWords!("not").before!"be";
@@ -240,41 +239,70 @@ if (isInstanceOf!(ShouldType, Should))
     return should.addWord!"less";
 }
 
+// const version
 private void numericCheck(Should, T)(Should should, const T expected, string file, size_t line)
-if (isInstanceOf!(ShouldType, Should))
+if (isInstanceOf!(ShouldType, Should)
+    && __traits(compiles,
+        mixin(format!(numericComparison!(Should, T).checkString)("Should.init.got()", "(() => (const T).init)()"))))
 {
-    import std.format : format;
-
     with (should)
     {
-        enum equalPart = hasWord!"equal" ? "==" : "";
-        enum equalPartShort = hasWord!"equal" ? "=" : "";
-        enum lessPart = hasWord!"less" ? "<" : "";
-        enum greaterPart = hasWord!"greater" ? ">" : "";
-
         const got = should.got();
 
-        enum comparison = lessPart ~ greaterPart;
-
-        enum combined = comparison ~ (comparison.empty ? equalPart : equalPartShort);
-
-        static if (should.hasWord!"not")
-        {
-            enum checkString = "!(got " ~ combined ~ " expected)";
-            enum message = "not " ~ combined ~ " %s";
-        }
-        else
-        {
-            enum checkString = "got " ~ combined ~ " expected";
-            enum message = combined ~ " %s";
-        }
+        alias enums = numericComparison!(Should, T);
 
         check(
-            mixin(checkString),
-            format("value %s", message.format(expected.quote)),
+            mixin(format!(enums.checkString)("got", "expected")),
+            format("value %s", enums.message.format(expected.quote)),
             format("%s", got.quote),
             file, line
         );
+    }
+}
+
+// nonconst version, for badwrong types that need nonconst opCmp
+private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
+if (isInstanceOf!(ShouldType, Should)
+    && !__traits(compiles,
+        mixin(format!(numericComparison!(Should, T).checkString)("Should.init.got()", "(() => (const T).init)()")))
+    && __traits(compiles,
+        mixin(format!(numericComparison!(Should, T).checkString)("Should.init.got()", "(() => T.init)()"))))
+{
+    with (should)
+    {
+        auto got = should.got();
+
+        alias enums = numericComparison!(Should, T);
+
+        check(
+            mixin(format!(enums.checkString)("got", "expected")),
+            format("value %s", enums.message.format(expected.quote)),
+            format("%s", got.quote),
+            file, line
+        );
+    }
+}
+
+private template numericComparison(Should, T)
+{
+    enum equalPart = Should.hasWord!"equal" ? "==" : "";
+    enum equalPartShort = Should.hasWord!"equal" ? "=" : "";
+    enum lessPart = Should.hasWord!"less" ? "<" : "";
+    enum greaterPart = Should.hasWord!"greater" ? ">" : "";
+
+    enum comparison = lessPart ~ greaterPart;
+
+    enum combined = comparison ~ (comparison.empty ? equalPart : equalPartShort);
+
+    static if (Should.hasWord!"not")
+    {
+        enum checkString = "!(%s " ~ combined ~ " %s)";
+        enum message = "not " ~ combined ~ " %s";
+    }
+    else
+    {
+        enum checkString = "%s " ~ combined ~ " %s";
+        enum message = combined ~ " %s";
     }
 }
 
@@ -335,6 +363,21 @@ unittest
     42.3.should.be.approximately(42.3, error = 1e-3);
 }
 
+unittest
+{
+    class A
+    {
+        public override int opCmp(Object rhs) const @nogc pure nothrow @safe
+        {
+            return 0;
+        }
+    }
+
+    auto a = new A;
+
+    a.should.not.be.greater(a);
+}
+
 public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
@@ -367,7 +410,6 @@ if (isInstanceOf!(ShouldType, Should))
 private void approximateCheck(Should, T)(Should should, T expected, ErrorValue error, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
-    import std.format : format;
     import std.math : abs;
 
     with (should)
@@ -397,8 +439,6 @@ if (isInstanceOf!(ShouldType, Should))
 
 private string quote(T)(T t)
 {
-    import std.format : format;
-
     static if (is(T: string))
     {
         return format("'%s'", t);
