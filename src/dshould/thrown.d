@@ -35,8 +35,8 @@ public template throwA(T : Throwable)
                 static if (should.hasWord!"not")
                 {
                     innerError = new FluentException(
-                        format!`expected no %s`(T.stringof),
-                        format!`, but expression threw %s`(throwable),
+                        format!`no exception of type %s`(T.stringof),
+                        format!`%s`(throwable),
                         file, line
                     );
                 }
@@ -77,8 +77,8 @@ public template throwA(T : Throwable)
             else
             {
                 throw new FluentException(
-                    format!`expected %s`(T.stringof),
-                    format!`, but expression threw %s`(otherThrowable),
+                    format!`exception of type %s`(T.stringof),
+                    format!`%s`(otherThrowable),
                     file, line
                 );
             }
@@ -94,8 +94,8 @@ public template throwA(T : Throwable)
         else
         {
             throw new FluentException(
-                format!`expected %s`(T.stringof),
-                `, but expression did not throw.`,
+                format!`exception of type %s`(T.stringof),
+                `no exception`,
                 file, line
             );
         }
