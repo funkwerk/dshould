@@ -24,6 +24,13 @@ if (isInstanceOf!(ShouldType, Should))
 public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
+    import std.traits : isDynamicArray;
+
+    static if (isDynamicArray!T)
+    {
+        pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
+    }
+
     with (should)
     {
         allowOnlyWords!("not").before!"be";
@@ -381,13 +388,6 @@ unittest
 public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
-    import std.traits : isDynamicArray;
-
-    static if (isDynamicArray!T)
-    {
-        pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
-    }
-
     should.allowOnlyWords!("approximately", "not").before!"equal";
 
     return should.approximateCheck(expected, error, file, line);
