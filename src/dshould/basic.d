@@ -250,7 +250,8 @@ if (isInstanceOf!(ShouldType, Should))
 private void numericCheck(Should, T)(Should should, const T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should)
     && __traits(compiles,
-        mixin(format!(numericComparison!(Should, T).checkString)("Should.init.got()", "(() => (const T).init)()"))))
+        (Should should, const T expected) =>
+            mixin(format!(numericComparison!(Should, T).checkString)("should.got()", "expected"))))
 {
     with (should)
     {
@@ -271,9 +272,11 @@ if (isInstanceOf!(ShouldType, Should)
 private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should)
     && !__traits(compiles,
-        mixin(format!(numericComparison!(Should, T).checkString)("Should.init.got()", "(() => (const T).init)()")))
+        (Should should, const T expected) =>
+            mixin(format!(numericComparison!(Should, T).checkString)("should.got()", "expected")))
     && __traits(compiles,
-        mixin(format!(numericComparison!(Should, T).checkString)("Should.init.got()", "(() => T.init)()"))))
+        (Should should, T expected) =>
+            mixin(format!(numericComparison!(Should, T).checkString)("should.got()", "expected"))))
 {
     with (should)
     {
