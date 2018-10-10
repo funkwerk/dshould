@@ -166,6 +166,22 @@ unittest
     (new SameyClass).should.equal(new SameyClass);
 }
 
+///
+unittest
+{
+    const string[int] hashmap1 = [1: "2", 5: "4"];
+    string[int] hashmap2 = null;
+
+    hashmap2[5] = "4";
+    hashmap2[1] = "2";
+
+    // TODO reliable way to produce a hash collision
+    // assert(hashmap1.keys != hashmap2.keys, "hash collision not found"); // make sure that ordering doesn't matter
+
+    hashmap1.should.equal(hashmap2);
+    hashmap2.should.equal(hashmap1);
+}
+
 /**
  * When called without parameters, `.equal` must be terminated by `.greater` or `.less`.
  * .should.be.equal.greater(...) is equivalent to .should.be.greater.equal(...)
@@ -250,7 +266,7 @@ if (isInstanceOf!(ShouldType, Should))
 private void numericCheck(Should, T)(Should should, const T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should)
     && __traits(compiles,
-        (Should should, const T expected) =>
+        (const Should should, const T expected) =>
             mixin(format!(numericComparison!(Should, T).checkString)("should.got()", "expected"))))
 {
     with (should)
@@ -272,7 +288,7 @@ if (isInstanceOf!(ShouldType, Should)
 private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should)
     && !__traits(compiles,
-        (Should should, const T expected) =>
+        (const Should should, const T expected) =>
             mixin(format!(numericComparison!(Should, T).checkString)("should.got()", "expected")))
     && __traits(compiles,
         (Should should, T expected) =>

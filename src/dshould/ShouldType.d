@@ -38,7 +38,7 @@ public struct ShouldType(G, string[] phrase = [])
 {
     import std.algorithm : canFind;
 
-    public G got;
+    private G got_;
 
     private int* refCount_ = null;
 
@@ -47,10 +47,21 @@ public struct ShouldType(G, string[] phrase = [])
      */
     public auto addWord(string word)()
     {
-        return ShouldType!(G, phrase ~ word)(this.got, this.refCount);
+        return ShouldType!(G, phrase ~ word)(this.got_, this.refCount);
     }
 
-    private this(G got) { this.got = got; this.refCount = 1; }
+    // Ensure that ShouldType constness is applied to lhs value
+    public auto got()
+    {
+        return this.got_();
+    }
+
+    public const(typeof(this.got_())) got() const
+    {
+        return this.got_();
+    }
+
+    private this(G got) { this.got_ = got; this.refCount = 1; }
 
     /**
      * Manually initialize a new ShouldType value from an existing one's ref count.
@@ -63,7 +74,7 @@ public struct ShouldType(G, string[] phrase = [])
     }
     do
     {
-        this.got = got;
+        this.got_ = got;
         this.refCount_ = &refCount;
         this.refCount++;
     }
