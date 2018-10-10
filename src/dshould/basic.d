@@ -1,6 +1,7 @@
 module dshould.basic;
 
 import std.format : format;
+import std.range : isInputRange;
 import std.string : empty;
 import dshould.ShouldType;
 public import dshould.ShouldType : should;
@@ -182,6 +183,17 @@ unittest
     hashmap2.should.equal(hashmap1);
 }
 
+///
+unittest
+{
+    import std.range : only;
+
+    5.only.should.equal([5]);
+    [5].should.equal(5.only);
+    5.only.should.not.equal(6.only);
+    5.only.should.not.equal([6]);
+}
+
 /**
  * When called without parameters, `.equal` must be terminated by `.greater` or `.less`.
  * .should.be.equal.greater(...) is equivalent to .should.be.greater.equal(...)
@@ -302,6 +314,31 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got", "expected")),
+            format("value %s", enums.message.format(expected.quote)),
+            format("%s", got.quote),
+            file, line
+        );
+    }
+}
+
+// range version
+private void numericCheck(Should, T)(Should should, T expected, string file, size_t line)
+if (isInstanceOf!(ShouldType, Should)
+    && numericComparison!(Should, T).combined == "=="
+    && !__traits(compiles, should.got() == expected)
+    && !__traits(compiles, cast(const) should.got() == cast(const) expected)
+    && isInputRange!(typeof(should.got())) && isInputRange!T)
+{
+    import std.range : array;
+
+    with (should)
+    {
+        auto got = should.got();
+
+        alias enums = numericComparison!(Should, T);
+
+        check(
+            mixin(format!(enums.checkString)("got.array", "expected.array")),
             format("value %s", enums.message.format(expected.quote)),
             format("%s", got.quote),
             file, line
