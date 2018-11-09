@@ -100,6 +100,13 @@ unittest
     [2, 3, 4].should.not.contain.any([5, 6]);
 }
 
+unittest
+{
+    const int[] constArray = [2, 3, 4];
+
+    constArray.should.contain(4);
+}
+
 private void checkContain(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
@@ -111,7 +118,7 @@ if (isInstanceOf!(ShouldType, Should))
     {
         auto got = should.got();
 
-        enum rhsIsValue = is(T == ElementType!(typeof(got)));
+        enum rhsIsValue = is(const T == const ElementType!(typeof(got)));
 
         static if (rhsIsValue)
         {
