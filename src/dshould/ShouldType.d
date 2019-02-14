@@ -53,6 +53,12 @@ public struct ShouldType(G, string[] phrase = [])
     // Ensure that ShouldType constness is applied to lhs value
     public auto got()
     {
+        scope(failure)
+        {
+            // prevent exceptions in got_() from setting off the unterminated-chain error
+            terminateChain;
+        }
+
         return this.got_();
     }
 

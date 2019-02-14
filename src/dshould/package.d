@@ -173,3 +173,14 @@ unittest
 
     test.should.throwAn!AssertError("unterminated should-chain!");
 }
+
+@("exceptions in the lhs don't set off the unterminated-chain error")
+unittest
+{
+    int foo()
+    {
+        throw new Exception("");
+    }
+
+    foo.should.be(3).should.throwAn!Exception;
+}
