@@ -495,6 +495,16 @@ if (isInstanceOf!(ShouldType, Should))
 
 private string quote(T)(T t)
 {
+    import std.typecons : Nullable;
+
+    static if (is(T : Nullable!U, U))
+    {
+        if (t.isNull)
+        {
+            return (typeof(cast() t)).stringof ~ ".null";
+        }
+    }
+
     static if (is(T: string))
     {
         return format("'%s'", t);

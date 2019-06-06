@@ -184,3 +184,14 @@ unittest
 
     foo.should.be(3).should.throwAn!Exception;
 }
+
+@("nullable equality")
+unittest
+{
+    import std.typecons : Nullable;
+
+    Nullable!int(42).should.not.equal(Nullable!int());
+
+    Nullable!int(42).should.equal(Nullable!int()).should.throwA!FluentException
+        ("Test failed: expected value == Nullable!int.null, but got 42");
+}
