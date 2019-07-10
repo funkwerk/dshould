@@ -21,15 +21,23 @@ if (isInstanceOf!(ShouldType, Should))
  * The word `.be` indicates a test for identity.
  * For value types, this is equivalent to equality.
  * It takes one parameter and terminates the phrase.
+ *
+ * Note: For convenience, string types are treated as if you had written `.should.equal`.
  */
-public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+public void be(Should, T, string file = __FILE__, size_t line = __LINE__)(Should should, T expected)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
     import std.traits : isDynamicArray;
 
     static if (isDynamicArray!T)
     {
-        pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
+        // TODO remove this warning if we get user reports of people actually wanting to
+        // identity-compare non-string dynamic arrays.
+        // Else, maybe static assert(false) it instead?
+        pragma(msg,
+            format!"%s(%s): reference comparison of dynamic array; this is probably not what you want."
+                (file, line)
+        );
     }
 
     with (should)
