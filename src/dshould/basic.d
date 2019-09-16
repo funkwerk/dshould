@@ -19,19 +19,13 @@ if (isInstanceOf!(ShouldType, Should))
 
 /**
  * The word `.be` indicates a test for identity.
- * For value types, this is equivalent to equality.
  * It takes one parameter and terminates the phrase.
+ *
+ * Note: the meaning of this word is redefined in `module dshould` to limit its use to classes and interfaces.
  */
-public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+package void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
-    import std.traits : isDynamicArray;
-
-    static if (isDynamicArray!T)
-    {
-        pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
-    }
-
     with (should)
     {
         allowOnlyWords!("not").before!"be";
@@ -114,7 +108,7 @@ unittest
 /**
  * When called without parameters, `.be` is a filler word for `.greater`, `.less` or `.equal`.
  */
-public auto be(Should)(Should should) pure
+package auto be(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not").before!"be";
@@ -375,7 +369,7 @@ private template numericComparison(Should, T)
  * see https://issues.dlang.org/show_bug.cgi?id=18839
  */
 
-private struct ErrorValue
+package struct ErrorValue
 {
     @disable this();
 
@@ -441,7 +435,7 @@ unittest
     a.should.not.be.greater(a);
 }
 
-public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+package void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     should.allowOnlyWords!("approximately", "not").before!"equal";

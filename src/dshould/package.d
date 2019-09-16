@@ -10,6 +10,40 @@ public import dshould.stringcmp;
 public import dshould.thrown;
 
 // dispatch based on type
+
+/**
+ * The word `.be` indicates a test for identity for objects and interfaces.
+ * For any other sort of type, this is equivalent to equality.
+ * It takes one parameter and terminates the phrase.
+ *
+ * Note: this verb diverges from D in that it handles array comparison as `==` does. This is because it's
+ * far too convenient to write `text.should.be("foo");`.
+ */
+public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
+{
+    static if (is(typeof(should.got()) == class) || is(typeof(should.got()) == interface))
+    {
+        return dshould.basic.be(should, expected, Fence(), file, line);
+    }
+    else
+    {
+        return equal(should, expected, Fence(), file, line);
+    }
+}
+
+public auto be(Should)(Should should) pure
+if (isInstanceOf!(ShouldType, Should))
+{
+    return dshould.basic.be(should);
+}
+
+public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
+{
+    return dshould.basic.be(should, expected, error, Fence(), file, line);
+}
+
 /**
  * The word `.equal` tests its parameter for equality with the left-hand side.
  * If the parameters are strings, a colored diff is used.
@@ -31,7 +65,7 @@ if (isInstanceOf!(ShouldType, Should))
     )
     {
         should.terminateChain;
-        should.got().toPrettyString.should.equal(value.toPrettyString);
+        should.got().toPrettyString.should.equal(value.toPrettyString, Fence(), file, line);
     }
     else
     {
@@ -86,7 +120,7 @@ unittest
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException("Test failed: expected 3, but got 2");
+    2.should.be(3).should.throwA!FluentException("Test failed: expected value == 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
