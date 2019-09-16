@@ -18,34 +18,74 @@ if (isInstanceOf!(ShouldType, Should))
 }
 
 /**
- * The word `.be` indicates a test for identity.
- * For value types, this is equivalent to equality.
- * It takes one parameter and terminates the phrase.
+ * The word `.be()` is a placeholder for `.equal`.
+ *
+ * Note: Reference comparison is achieved with `.be.same.as()`.
  */
 public void be(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately" && !is(T == typeof(null)))
+{
+    return equal(should, expected, Fence(), file, line);
+}
+
+/**
+ * The phrase `be.same.as()` compares two values by reference.
+ */
+public auto same(Should)(Should should) pure
+if (isInstanceOf!(ShouldType, Should) && should.hasWord!"be")
+{
+    should.allowOnlyWords!("not", "be").before!"same";
+
+    return should.addWord!"same";
+}
+
+/**
+ * The phrase `be(null)` is equivalent to `be.same.as(null)`.
+ */
+public void be(Should)(
+    Should should, typeof(null) expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
 {
-    import std.traits : isDynamicArray;
+    should.allowOnlyWords!("not").before!"be";
 
-    static if (isDynamicArray!T)
-    {
-        pragma(msg, "reference comparison of dynamic array: this is probably not what you want.");
-    }
+    should.be.same.as(null, Fence(), file, line);
+}
 
+///
+public auto as(Should, T)(
+    Should should, T expected,
+    Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && should.hasWord!"same")
+{
+    return dshould.basic.compareReference(should, expected, Fence(), file, line);
+}
+
+//
+unittest
+{
+    auto array1 = [5], array2 = array1.dup;
+
+    array1.should.be(array1);
+    array1.should.be(array2);
+
+    array1.should.be.same.as(array1);
+    array1.should.not.be.same.as(array2);
+
+    (new Object).should.not.be(new Object);
+}
+
+private void compareReference(Should, T)(
+    Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
     with (should)
     {
-        allowOnlyWords!("not").before!"be";
-
         enum isNullType = is(T == typeof(null));
-        // only types that can have toString need to disambiguate
-        enum isReferenceType = is(T == class) || is(T == interface);
 
         auto got = should.got();
 
         static if (hasWord!"not")
         {
-            const refInfo = isReferenceType ? "different reference than " : "not ";
-
             static if (isNullType)
             {
                 check(got !is null, "non-null", "null", file, line);
@@ -54,17 +94,15 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
             {
                 check(
                     got !is expected,
-                    format("%s%s", refInfo, expected.quote),
-                    isReferenceType ? "same reference" : "it",
+                    format("%s%s", "different reference than ", expected.quote),
+                    "same reference",
                     file, line
                 );
             }
         }
         else
         {
-            const refInfo = isReferenceType ? "same reference as " : "";
-
-            static if (is(T == typeof(null)))
+            static if (isNullType)
             {
                 check(got is null, "null", format("%s", got.quote), file, line);
             }
@@ -72,34 +110,13 @@ if (isInstanceOf!(ShouldType, Should) && !should.hasWord!"approximately")
             {
                 check(
                     got is expected,
-                    format("%s%s", refInfo, expected.quote),
+                    format("%s%s", "same reference as ", expected.quote),
                     format("%s", got.quote),
                     file, line
                 );
             }
         }
     }
-}
-
-///
-pure @safe unittest
-{
-    2.should.be(2);
-    2.should.not.be(5);
-}
-
-///
-unittest
-{
-    (new Object).should.not.be(new Object);
-    (new Object).should.not.be(null);
-    (cast(Object) null).should.be(null);
-}
-
-///
-unittest
-{
-    (cast(void delegate()) null).should.be(null);
 }
 
 unittest
@@ -114,7 +131,7 @@ unittest
 /**
  * When called without parameters, `.be` is a filler word for `.greater`, `.less` or `.equal`.
  */
-public auto be(Should)(Should should) pure
+package auto be(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not").before!"be";
@@ -163,8 +180,9 @@ unittest
         override bool opEquals(Object o) { return true; }
     }
 
-    (new SameyClass).should.not.be(new SameyClass);
+    (new SameyClass).should.be(new SameyClass);
     (new SameyClass).should.equal(new SameyClass);
+    (new SameyClass).should.not.be.same.as(new SameyClass);
 }
 
 ///
@@ -375,7 +393,7 @@ private template numericComparison(Should, T)
  * see https://issues.dlang.org/show_bug.cgi?id=18839
  */
 
-private struct ErrorValue
+package struct ErrorValue
 {
     @disable this();
 
@@ -441,7 +459,7 @@ unittest
     a.should.not.be.greater(a);
 }
 
-public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+package void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     should.allowOnlyWords!("approximately", "not").before!"equal";

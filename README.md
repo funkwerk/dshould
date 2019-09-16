@@ -12,7 +12,9 @@ When a test fails, the message is always a variation of "Expected [right], but g
 
     value.should.equal(value);
 
-    value.should.not.equal(value);
+    value.should.be(value); // same thing
+
+    value.should.not.be(value);
 
     value.should.be.greater(value);
 
@@ -20,7 +22,9 @@ When a test fails, the message is always a variation of "Expected [right], but g
 
     value.should.approximately.equal(value, error=plusminus);
 
-    object.should.be(null);
+    object.should.not.be.same.as(object2); // reference comparison
+
+    object.should.be(null); // null is always reference comparison
 
 # Arrays
 

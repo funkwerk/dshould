@@ -10,6 +10,7 @@ public import dshould.stringcmp;
 public import dshould.thrown;
 
 // dispatch based on type
+
 /**
  * The word `.equal` tests its parameter for equality with the left-hand side.
  * If the parameters are strings, a colored diff is used.
@@ -31,7 +32,7 @@ if (isInstanceOf!(ShouldType, Should))
     )
     {
         should.terminateChain;
-        should.got().toPrettyString.should.equal(value.toPrettyString);
+        should.got().toPrettyString.should.equal(value.toPrettyString, Fence(), file, line);
     }
     else
     {
@@ -86,7 +87,7 @@ unittest
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException("Test failed: expected 3, but got 2");
+    2.should.be(3).should.throwA!FluentException("Test failed: expected value == 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
@@ -102,11 +103,11 @@ unittest
     obj.should.be(null)
         .should.throwA!FluentException("Test failed: expected null, but got object.Object");
 
-    obj.should.not.be(obj)
+    obj.should.not.be.same.as(obj)
         .should.throwA!FluentException(
             "Test failed: expected different reference than object.Object, but got same reference");
 
-    obj.should.be(new Object)
+    obj.should.be.same.as(new Object)
         .should.throwA!FluentException(
             "Test failed: expected same reference as object.Object, but got object.Object");
 }
@@ -194,4 +195,15 @@ unittest
 
     Nullable!int(42).should.equal(Nullable!int()).should.throwA!FluentException
         ("Test failed: expected value == Nullable!int.null, but got 42");
+}
+
+@("nullable equality")
+unittest
+{
+    import std.typecons : Nullable;
+
+    Nullable!string().should.not.equal("");
+
+    Nullable!string().should.equal("").should.throwA!FluentException
+        ("Test failed: expected value == '', but got Nullable!string.null");
 }
