@@ -26,7 +26,7 @@
 			"targetType": "executable",
 			"targetName": "TestRunner",
 			"targetPath": "build",
-			"preBuildCommands": ["dub run unit-threaded -c gen_ut_main -- -f build/ut.d"],
+			"preBuildCommands": ["$DUB run --compiler=$$DC unit-threaded -c gen_ut_main -- -f build/ut.d"],
 			"mainSourceFile": "build/ut.d",
 			"dependencies": {
 				"unit-threaded": "~>0.10"
