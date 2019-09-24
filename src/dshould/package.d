@@ -125,7 +125,7 @@ unittest
 @("prints informative errors for range emptiness")
 unittest
 {
-    [].should.not.be.empty
+    (int[]).init.should.not.be.empty
         .should.throwA!FluentException("Test failed: expected nonempty range, but got []");
 
     [5].should.be.empty

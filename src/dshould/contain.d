@@ -130,16 +130,16 @@ if (isInstanceOf!(ShouldType, Should))
                 {
                     check(
                         got.any!(a => a != expected),
-                        format("array containing values other than %s", expected),
-                        format("%s", got),
+                        format!"array containing values other than %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
                 else
                 {
                     check(
                         got.all!(a => a == expected),
-                        format("array containing only the value %s", expected),
-                        format("%s", got),
+                        format!"array containing only the value %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
             }
@@ -149,16 +149,16 @@ if (isInstanceOf!(ShouldType, Should))
                 {
                     check(
                         !got.save.canFind(expected),
-                        format("array not containing %s", expected),
-                        format("%s", got),
+                        format!"array not containing %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
                 else
                 {
                     check(
                         got.save.canFind(expected),
-                        format("array containing %s", expected),
-                        format("%s", got),
+                        format!"array containing %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
             }
@@ -171,16 +171,16 @@ if (isInstanceOf!(ShouldType, Should))
                 {
                     check(
                         !got.all!(a => expected.save.canFind(a)),
-                        format("array containing values other than %s", expected),
-                        format("%s", got),
+                        format!"array containing values other than %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
                 else
                 {
                     check(
                         got.all!(a => expected.save.canFind(a)),
-                        format("array containing only the values %s", expected),
-                        format("%s", got),
+                        format!"array containing only the values %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
             }
@@ -190,16 +190,16 @@ if (isInstanceOf!(ShouldType, Should))
                 {
                     check(
                         !expected.all!(a => got.save.canFind(a)),
-                        format("array not containing every value in %s", expected),
-                        format("%s", got),
+                        format!"array not containing every value in %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
                 else
                 {
                     check(
                         expected.all!(a => got.save.canFind(a)),
-                        format("array containing every value in %s", expected),
-                        format("%s", got),
+                        format!"array containing every value in %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
             }
@@ -209,16 +209,16 @@ if (isInstanceOf!(ShouldType, Should))
                 {
                     check(
                         !expected.any!(a => got.save.canFind(a)),
-                        format("array not containing any value in %s", expected),
-                        format("%s", got),
+                        format!"array not containing any value in %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
                 else
                 {
                     check(
                         expected.any!(a => got.save.canFind(a)),
-                        format("array containing any value of %s", expected),
-                        format("%s", got),
+                        format!"array containing any value of %s"(expected),
+                        format!"%s"(got),
                         file, line);
                 }
             }
