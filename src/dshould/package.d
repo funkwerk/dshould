@@ -165,14 +165,12 @@ unittest
 @("asserts when forgetting to terminate should expression")
 unittest
 {
-    import core.exception : AssertError;
-
     void test()
     {
         2.should;
     }
 
-    test.should.throwAn!AssertError("unterminated should-chain!");
+    test.should.throwAn!Exception("unterminated should-chain!");
 }
 
 @("exceptions in the lhs don't set off the unterminated-chain error")
@@ -206,4 +204,16 @@ unittest
 
     Nullable!string().should.equal("").should.throwA!FluentException
         ("Test failed: expected value == '', but got Nullable!string.null");
+}
+
+@("exception thrown by value is not hijacked by unterminated should-chain error")
+unittest
+{
+    int foo()
+    {
+        throw new Exception("foo");
+    }
+
+    foo.should.equal(2).should.throwAn!Exception("foo");
+    2.should.equal(foo).should.throwAn!Exception("foo");
 }

@@ -64,6 +64,11 @@ public struct ShouldType(G, string[] phrase = [])
 
     public const(typeof(this.got_())) got() const
     {
+        scope(failure)
+        {
+            // we know refCount is nonconst
+            (cast() this).terminateChain;
+        }
         return this.got_();
     }
 
@@ -97,8 +102,12 @@ public struct ShouldType(G, string[] phrase = [])
 
     ~this() @trusted
     {
+        import std.exception : enforce;
+
         this.refCount--;
-        assert(this.refCount > 0, "unterminated should-chain!");
+        // NOT an assert!
+        // this ensures that if we fail as a side effect of a test failing, we don't override its exception
+        enforce!Exception(this.refCount > 0, "unterminated should-chain!");
     }
 
     /**
