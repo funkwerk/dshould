@@ -131,7 +131,7 @@ unittest
 /**
  * When called without parameters, `.be` is a filler word for `.greater`, `.less` or `.equal`.
  */
-package auto be(Should)(Should should) pure
+public auto be(Should)(Should should) pure
 if (isInstanceOf!(ShouldType, Should))
 {
     should.allowOnlyWords!("not").before!"be";
@@ -459,7 +459,7 @@ unittest
     a.should.not.be.greater(a);
 }
 
-package void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+public void be(Should, T)(Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
 {
     should.allowOnlyWords!("approximately", "not").before!"equal";
