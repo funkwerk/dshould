@@ -94,7 +94,7 @@ if (isInstanceOf!(ShouldType, Should))
             {
                 check(
                     got !is expected,
-                    format!"different reference than %s"(expected.quote),
+                    format("different reference than %s", expected.quote),
                     "same reference",
                     file, line
                 );
@@ -104,14 +104,14 @@ if (isInstanceOf!(ShouldType, Should))
         {
             static if (isNullType)
             {
-                check(got is null, "null", format!"%s"(got.quote), file, line);
+                check(got is null, "null", format("%s", got.quote), file, line);
             }
             else
             {
                 check(
                     got is expected,
-                    format!"same reference as %s"(expected.quote),
-                    format!"%s"(got.quote),
+                    format("same reference as %s", expected.quote),
+                    format("%s", got.quote),
                     file, line
                 );
             }
@@ -307,8 +307,8 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got", "expected")),
-            format!"value %s"(enums.message.format(expected.quote)),
-            format!"%s"(got.quote),
+            format("value %s", enums.message.format(expected.quote)),
+            format("%s", got.quote),
             file, line
         );
     }
@@ -332,8 +332,8 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got", "expected")),
-            format!"value %s"(enums.message.format(expected.quote)),
-            format!"%s"(got.quote),
+            format("value %s", enums.message.format(expected.quote)),
+            format("%s", got.quote),
             file, line
         );
     }
@@ -357,8 +357,8 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got.array", "expected.array")),
-            format!"value %s"(enums.message.format(expected.quote)),
-            format!"%s"(got.quote),
+            format("value %s", enums.message.format(expected.quote)),
+            format("%s", got.quote),
             file, line
         );
     }
@@ -494,8 +494,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 abs(expected - got) >= error.value,
-                format!"value outside %s ± %s"(expected, error.value),
-                format!"%s"(got),
+                format("value outside %s ± %s", expected, error.value),
+                format("%s", got),
                 file, line
             );
         }
@@ -503,8 +503,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 abs(expected - got) < error.value,
-                format!"%s ± %s"(expected, error.value),
-                format!"%s"(got),
+                format("%s ± %s", expected, error.value),
+                format("%s", got),
                 file, line
             );
         }
@@ -525,10 +525,10 @@ private string quote(T)(T t)
 
     static if (is(T: string))
     {
-        return format!"'%s'"(t);
+        return format("'%s'", t);
     }
     else
     {
-        return format!"%s"(t);
+        return format("%s", t);
     }
 }

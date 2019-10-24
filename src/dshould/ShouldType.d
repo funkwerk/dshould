@@ -215,11 +215,11 @@ if (isInstanceOf!(ShouldType, Should))
 
         static if (hasWord!"not")
         {
-            check(!got.empty, "nonempty range", format!"%s"(got), file, line);
+            check(!got.empty, "nonempty range", format("%s", got), file, line);
         }
         else
         {
-            check(got.empty, "empty range", format!"%s"(got), file, line);
+            check(got.empty, "empty range", format("%s", got), file, line);
         }
     }
 }
