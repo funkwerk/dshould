@@ -2,6 +2,7 @@ module dshould.contain;
 
 import dshould.ShouldType;
 import dshould.basic : not, should;
+import std.traits : isAssociativeArray;
 
 /**
  * The word `.contain` takes one value, expected to appear in the range on the left hand side.
@@ -107,8 +108,96 @@ unittest
     constArray.should.contain(4);
 }
 
+unittest
+{
+    string[string] assocArray = ["a": "b"];
+
+    assocArray.should.contain.all(["a": "b"]);
+    assocArray.should.not.contain.any(["a": "y"]);
+    assocArray.should.not.contain.any(["x": "b"]);
+}
+
 private void checkContain(Should, T)(Should should, T expected, string file, size_t line)
-if (isInstanceOf!(ShouldType, Should))
+if (isInstanceOf!(ShouldType, Should) && isAssociativeArray!T && is(const typeof(should.got()) == const T))
+{
+    import std.algorithm : any, all, canFind;
+    import std.format : format;
+
+    alias pairEqual = (a, b) => a.key == b.key && a.value == b.value;
+
+    with (should)
+    {
+        auto got = should.got();
+        alias inExpected = a => expected.byKeyValue.canFind!pairEqual(a);
+        alias inGot = a => got.byKeyValue.canFind!pairEqual(a);
+
+        static if (hasWord!"only")
+        {
+            static if (hasWord!"not")
+            {
+                check(
+                    !got.byKeyValue.all!inExpected,
+                    format("associative array containing pairs other than %s", expected),
+                    format("%s", got),
+                    file, line);
+            }
+            else
+            {
+                check(
+                    got.byKeyValue.all!inExpected,
+                    format("associative array containing only the pairs %s", expected),
+                    format("%s", got),
+                    file, line);
+            }
+        }
+        else static if (hasWord!"all")
+        {
+            static if (hasWord!"not")
+            {
+                check(
+                    !expected.byKeyValue.all!inGot,
+                    format("associative array not containing every pair in %s", expected),
+                    format("%s", got),
+                    file, line);
+            }
+            else
+            {
+                check(
+                    expected.byKeyValue.all!inGot,
+                    format("associative array containing every pair in %s", expected),
+                    format("%s", got),
+                    file, line);
+            }
+        }
+        else static if (hasWord!"any")
+        {
+            static if (hasWord!"not")
+            {
+                check(
+                    !expected.byKeyValue.any!inGot,
+                    format("associative array not containing any pair in %s", expected),
+                    format("%s", got),
+                    file, line);
+            }
+            else
+            {
+                check(
+                    expected.byKeyValue.any!inGot,
+                    format("associative array containing any pair of %s", expected),
+                    format("%s", got),
+                    file, line);
+            }
+        }
+        else
+        {
+            static assert(false,
+                `bad grammar: expected "contain all", "contain any", "contain only" (or "only contain")`);
+        }
+    }
+}
+
+private void checkContain(Should, T)(Should should, T expected, string file, size_t line)
+if (isInstanceOf!(ShouldType, Should) && !isAssociativeArray!T)
 {
     import std.algorithm : any, all, canFind;
     import std.format : format;
