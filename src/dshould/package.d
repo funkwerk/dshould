@@ -18,6 +18,7 @@ public import dshould.thrown;
 public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
+    import dshould.prettyprint : prettyprint;
     import std.json : JSONValue;
     import std.traits : Unqual;
 
@@ -28,11 +29,22 @@ if (isInstanceOf!(ShouldType, Should))
     else static if (
         is(Unqual!T == JSONValue)
         && is(Unqual!(typeof(should.got())) == JSONValue)
-        && !should.hasWord!"not"
-    )
+        && !should.hasWord!"not")
     {
-        should.terminateChain;
-        should.got().toPrettyString.should.equal(value.toPrettyString, Fence(), file, line);
+        should.addWord!"equal".stringCmp(
+            should.got().toPrettyString,
+            value.toPrettyString,
+            false, file, line);
+    }
+    else static if (
+        __traits(compiles, T.init.toString())
+        && __traits(compiles, typeof(should.got()).init.toString())
+        && !should.hasWord!"not")
+    {
+        should.addWord!"equal".stringCmp(
+            should.got().toString().prettyprint,
+            value.toString().prettyprint,
+            false, file, line);
     }
     else
     {
@@ -138,12 +150,12 @@ unittest
     import std.json : parseJSON;
 
     const expected = `Test failed: expected ` ~ `
-' {
+ {
 ` ~ red(`-    "b": "Bar"`) ~ `
- }', but got ` ~ `
-' {
+ }, but got ` ~ `
+ {
 ` ~ green(`+    "a": "Foo"`) ~ `
- }'`;
+ }`;
 
     const left = parseJSON(`{"a": "Foo"}`);
     const right = parseJSON(`{"b": "Bar"}`);
@@ -192,7 +204,7 @@ unittest
     Nullable!int(42).should.not.equal(Nullable!int());
 
     Nullable!int(42).should.equal(Nullable!int()).should.throwA!FluentException
-        ("Test failed: expected value == Nullable!int.null, but got 42");
+        ("Test failed: expected Nullable.null, but got 42");
 }
 
 @("nullable equality")

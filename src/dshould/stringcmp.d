@@ -16,10 +16,10 @@ if (isInstanceOf!(ShouldType, Should) && is(T == string))
 {
     should.allowOnlyWords!().before!"equal (string)";
 
-    should.addWord!"equal".stringCmp(expected, file, line);
+    should.addWord!"equal".stringCmp(should.got(), expected, true, file, line);
 }
 
-private void stringCmp(Should, T)(Should should, T expected, string file, size_t line)
+package void stringCmp(Should, T)(Should should, T got, T expected, bool quoted, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should))
 {
     import std.algorithm : canFind;
@@ -28,14 +28,13 @@ if (isInstanceOf!(ShouldType, Should))
 
     should.terminateChain;
 
-    auto got = should.got();
-
     if (got != expected)
     {
         string original;
         string diff;
+        const bool multiline = got.canFind("\n");
 
-        if (got.canFind("\n"))
+        if (multiline)
         {
             auto diffPair = multiLineDiff(expected.split("\n"), got.split("\n"));
 
@@ -50,9 +49,11 @@ if (isInstanceOf!(ShouldType, Should))
             diff = diffPair.target;
         }
 
+        const string fmt = (multiline ? "\n" : "") ~ (quoted ? "'%s'" : "%s");
+
         throw new FluentException(
-            format!"\n'%s'"(original),
-            format!"\n'%s'"(diff),
+            format(fmt, original),
+            format(fmt, diff),
             file, line
         );
     }
