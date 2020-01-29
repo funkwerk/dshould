@@ -137,11 +137,11 @@ unittest
 {
     import std.json : parseJSON;
 
-    const expected = `Test failed: expected ' {
+    const expected = `Test failed: expected ` ~ `
+' {
 ` ~ red(`-    "b": "Bar"`) ~ `
- }
-', but got '
- {
+ }', but got ` ~ `
+' {
 ` ~ green(`+    "a": "Foo"`) ~ `
  }'`;
 

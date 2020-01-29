@@ -39,8 +39,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             auto diffPair = multiLineDiff(expected.split("\n"), got.split("\n"));
 
-            original = diffPair.original.join("\n") ~ "\n";
-            diff = "\n" ~ diffPair.target.join("\n");
+            original = diffPair.original.join("\n");
+            diff = diffPair.target.join("\n");
         }
         else
         {
@@ -51,8 +51,8 @@ if (isInstanceOf!(ShouldType, Should))
         }
 
         throw new FluentException(
-            format!`'%s'`(original),
-            format!`'%s'`(diff),
+            format!"\n'%s'"(original),
+            format!"\n'%s'"(diff),
             file, line
         );
     }
