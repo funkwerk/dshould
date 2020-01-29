@@ -11,7 +11,7 @@ import std.typecons;
  * A comma separated paren tree is a string that contains a balanced number of quotation marks, parentheses
  * and brackets.
  */
-public string prettyprint(const string text, size_t columnLength = 80)
+public string prettyprint(const string text, size_t columnLength = 60)
 {
     const tree = text.parse;
 
@@ -50,9 +50,9 @@ private string prettyprint(const Tree tree, size_t width)
 
     Appender!string result;
 
+    // skip prefix so caller can decide whether or not to strip
     void walkOneLine(const Tree tree)
     {
-        result ~= tree.prefix.stripLeft;
         if (tree.parenType.isNull)
         {
             return;
@@ -63,6 +63,7 @@ private string prettyprint(const Tree tree, size_t width)
             {
                 result ~= ",";
             }
+            result ~= child.prefix;
             walkOneLine(child);
         });
         result ~= tree.parenType.get.closing;
@@ -72,6 +73,7 @@ private string prettyprint(const Tree tree, size_t width)
     {
         if (!tree.lengthExceeds(width - indent * 2))
         {
+            result ~= tree.prefix.stripLeft;
             walkOneLine(tree);
             return;
         }
