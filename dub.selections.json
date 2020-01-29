@@ -1,6 +1,7 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"unit-threaded": "0.10.2"
+		"prettyprint": "1.0.2",
+		"unit-threaded": "0.10.7"
 	}
 }
