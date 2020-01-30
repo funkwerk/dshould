@@ -74,6 +74,36 @@ if (isInstanceOf!(ShouldType, Should))
     return dshould.basic.equal(should);
 }
 
+/// be is equivalent to equal for the .should.be(value) case
+public void be(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    static if (should.hasNoWords && !is(T == typeof(null)))
+    {
+        return equal(should, value, Fence(), file, line);
+    }
+    else
+    {
+        // be is basic.be for all other cases
+        return dshould.basic.be(should, value, Fence(), file, line);
+    }
+}
+
+// be is basic.be for all other cases
+public auto be(Should)(Should should)
+if (isInstanceOf!(ShouldType, Should))
+{
+    return dshould.basic.be(should);
+}
+
+// be is basic.be for all other cases
+public auto be(Should, T)(
+    Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
+{
+    return dshould.basic.be(should, expected, error, Fence(), file, line);
+}
+
 /**
  * The word `.throwA` (or `.throwAn`) expects its left-hand side expression to throw an exception.
  * Instead of the cumbersome `.where.msg.should.equal("msg")`, the `msg` of the Exception to expect
@@ -177,6 +207,8 @@ unittest
     const right = parseJSON(`{"b": "Bar"}`);
 
     left.should.equal(right)
+        .should.throwA!FluentException(expected);
+    left.should.be(right)
         .should.throwA!FluentException(expected);
 }
 
