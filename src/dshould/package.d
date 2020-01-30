@@ -31,20 +31,36 @@ if (isInstanceOf!(ShouldType, Should))
         && is(Unqual!(typeof(should.got())) == JSONValue)
         && !should.hasWord!"not")
     {
-        should.addWord!"equal".stringCmp(
-            should.got().toPrettyString,
-            value.toPrettyString,
-            false, file, line);
+        should.allowOnlyWords!().before!"equal (string)";
+        should.terminateChain;
+
+        auto got = should.got();
+
+        if (got != value)
+        {
+            stringCmpError(
+                got.toPrettyString,
+                value.toPrettyString,
+                false, file, line);
+        }
     }
     else static if (
         __traits(compiles, T.init.toString())
         && __traits(compiles, typeof(should.got()).init.toString())
         && !should.hasWord!"not")
     {
-        should.addWord!"equal".stringCmp(
-            should.got().toString().prettyprint,
-            value.toString().prettyprint,
-            false, file, line);
+        should.allowOnlyWords!().before!"equal (string)";
+        should.terminateChain;
+
+        auto got = should.got();
+
+        if (got != value)
+        {
+            stringCmpError(
+                got.toString().prettyprint,
+                value.toString().prettyprint,
+                false, file, line);
+        }
     }
     else
     {
@@ -228,4 +244,27 @@ unittest
 
     foo.should.equal(2).should.throwAn!Exception("foo");
     2.should.equal(foo).should.throwAn!Exception("foo");
+}
+
+@("compare two unequal values with the same toString")
+unittest
+{
+    class Class
+    {
+        override bool opEquals(const Object other) const
+        {
+            return false;
+        }
+
+        override string toString() const
+        {
+            return "Class";
+        }
+    }
+
+    auto first = new Class;
+    auto second = new Class;
+
+    (first == second).should.be(false);
+    first.should.equal(second).should.throwAn!Exception("Test failed: expected Class, but got Class");
 }
