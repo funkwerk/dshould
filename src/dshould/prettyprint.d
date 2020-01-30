@@ -25,6 +25,7 @@ public string prettyprint(const string text, size_t columnLength = 60)
 
 
 ///
+@("pretty print a string")
 unittest
 {
     import dshould : equal, should;
@@ -114,6 +115,7 @@ private Nullable!Tree parse(string text)
     return result;
 }
 
+@("parse a paren expression to a tree")
 unittest
 {
     import dshould : equal, should;
@@ -250,6 +252,7 @@ private struct Tree
     }
 }
 
+@("estimate the print length of a tree")
 unittest
 {
     import dshould : be, less, should;
@@ -324,6 +327,7 @@ private struct QuotedText
         return this.textBeforeSkip[0 .. this.textBeforeSkip.length - other.text.length];
     }
 
+    @("quote at the beginning and end of a range")
     unittest
     {
         import dshould : equal, should;
