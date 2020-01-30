@@ -11,7 +11,7 @@ import std.typecons;
  * A comma separated paren tree is a string that contains a balanced number of quotation marks, parentheses
  * and brackets.
  */
-public string prettyprint(const string text, size_t columnLength = 60)
+public string prettyprint(const string text, size_t columnLength = 80)
 {
     const tree = text.parse;
 
@@ -23,7 +23,6 @@ public string prettyprint(const string text, size_t columnLength = 60)
     return tree.get.prettyprint(columnLength);
 }
 
-
 ///
 @("pretty print a string")
 unittest
@@ -31,19 +30,21 @@ unittest
     import dshould : equal, should;
 
     prettyprint("Foo()").should.equal("Foo()");
-    prettyprint("Foo(Bar(Baz()), Baq())", 12).should.equal(
+    prettyprint("Foo(Bar(Baz()), Baq())", 16).should.equal(
 "Foo(
-  Bar(Baz()),
-  Baq()
+    Bar(Baz()),
+    Baq()
 )");
-    prettyprint("Foo(Bar(Baz()), Baq())", 10).should.equal(
+    prettyprint("Foo(Bar(Baz()), Baq())", 13).should.equal(
 "Foo(
-  Bar(
-    Baz()
-  ),
-  Baq()
+    Bar(
+        Baz()
+    ),
+    Baq()
 )");
 }
+
+private enum indent = "    ";
 
 private string prettyprint(const Tree tree, size_t width)
 {
@@ -70,9 +71,9 @@ private string prettyprint(const Tree tree, size_t width)
         result ~= tree.parenType.get.closing;
     }
 
-    void walk(size_t indent, const Tree tree)
+    void walk(size_t level, const Tree tree)
     {
-        if (!tree.lengthExceeds(width - indent * 2))
+        if (!tree.lengthExceeds(width - level * indent.length))
         {
             result ~= tree.prefix.stripLeft;
             walkOneLine(tree);
@@ -91,11 +92,11 @@ private string prettyprint(const Tree tree, size_t width)
                 result ~= ",";
             }
             result ~= "\n";
-            (indent + 1).iota.each!((_) { result ~= "  "; });
-            walk(indent + 1, child);
+            (level + 1).iota.each!((_) { result ~= indent; });
+            walk(level + 1, child);
         });
         result ~= "\n";
-        indent.iota.each!((_) { result ~= "  "; });
+        level.iota.each!((_) { result ~= indent; });
         result ~= tree.parenType.get.closing;
     }
     walk(0, tree);
