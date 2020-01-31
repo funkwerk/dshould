@@ -19,6 +19,7 @@ public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string f
 if (isInstanceOf!(ShouldType, Should))
 {
     import dshould.prettyprint : prettyprint;
+    import std.conv : to;
     import std.json : JSONValue;
     import std.traits : Unqual;
 
@@ -26,40 +27,49 @@ if (isInstanceOf!(ShouldType, Should))
     {
         dshould.stringcmp.equal(should, value, Fence(), file, line);
     }
-    else static if (
-        is(Unqual!T == JSONValue)
-        && is(Unqual!(typeof(should.got())) == JSONValue)
-        && !should.hasWord!"not")
+    else static if (!should.hasWord!"not")
     {
-        should.allowOnlyWords!().before!"equal (string)";
-        should.terminateChain;
-
-        auto got = should.got();
-
-        if (got != value)
+        static if (
+            is(Unqual!T == JSONValue)
+            && is(Unqual!(typeof(should.got())) == JSONValue))
         {
-            stringCmpError(
-                got.toPrettyString,
-                value.toPrettyString,
-                false, file, line);
+            should.allowOnlyWords!().before!"equal (string)";
+            should.terminateChain;
+
+            auto got = should.got();
+            const gotString = got.toPrettyString;
+            const valueString = value.toPrettyString;
         }
+        else static if (
+            __traits(compiles, T.init.toString())
+            && __traits(compiles, typeof(should.got()).init.toString()))
+        {
+            should.allowOnlyWords!().before!"equal (string)";
+            should.terminateChain;
+
+            auto got = should.got();
+            const gotString = got.toString().prettyprint;
+            const valueString = value.toString().prettyprint;
+        }
+        else static if (
+            __traits(compiles, T.init[0].toString())
+            && __traits(compiles, typeof(should.got()).init[0].toString()))
+        {
+            should.allowOnlyWords!().before!"equal (string)";
+            should.terminateChain;
+
+            auto got = should.got();
+            const gotString = got.to!string.prettyprint;
+            const valueString = value.to!string.prettyprint;
+        }
+
     }
-    else static if (
-        __traits(compiles, T.init.toString())
-        && __traits(compiles, typeof(should.got()).init.toString())
-        && !should.hasWord!"not")
+
+    static if (__traits(compiles, got))
     {
-        should.allowOnlyWords!().before!"equal (string)";
-        should.terminateChain;
-
-        auto got = should.got();
-
         if (got != value)
         {
-            stringCmpError(
-                got.toString().prettyprint,
-                value.toString().prettyprint,
-                false, file, line);
+            stringCmpError(gotString, valueString, false, file, line);
         }
     }
     else
