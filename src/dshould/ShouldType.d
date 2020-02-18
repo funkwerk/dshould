@@ -176,6 +176,11 @@ public struct ShouldType(G, string[] phrase = [])
      */
     public enum hasWord(string word) = phrase.canFind(word);
 
+    /**
+     * Evaluates to true if no words exist in the current phrase.
+     */
+    public enum hasNoWords = phrase.empty;
+
     // work around https://issues.dlang.org/show_bug.cgi?id=18839
     public auto empty()(Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
     {

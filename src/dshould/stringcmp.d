@@ -14,48 +14,47 @@ import dshould.basic;
 public void equal(Should, T)(Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should) && is(T == string))
 {
-    should.allowOnlyWords!().before!"equal (string)";
-
-    should.addWord!"equal".stringCmp(expected, file, line);
-}
-
-private void stringCmp(Should, T)(Should should, T expected, string file, size_t line)
-if (isInstanceOf!(ShouldType, Should))
-{
-    import std.algorithm : canFind;
-
-    should.allowOnlyWords!("equal").before!"equal (string)";
-
-    should.terminateChain;
-
     auto got = should.got();
+
+    should.allowOnlyWords!().before!"equal (string)";
+    should.terminateChain;
 
     if (got != expected)
     {
-        string original;
-        string diff;
-
-        if (got.canFind("\n"))
-        {
-            auto diffPair = multiLineDiff(expected.split("\n"), got.split("\n"));
-
-            original = diffPair.original.join("\n") ~ "\n";
-            diff = "\n" ~ diffPair.target.join("\n");
-        }
-        else
-        {
-            auto diffPair = oneLineDiff(expected, got);
-
-            original = diffPair.original;
-            diff = diffPair.target;
-        }
-
-        throw new FluentException(
-            format!`'%s'`(original),
-            format!`'%s'`(diff),
-            file, line
-        );
+        stringCmpError(got, expected, Yes.quote, file, line);
     }
+}
+
+package void stringCmpError(string got, string expected, Flag!"quote" quote, string file, size_t line)
+{
+    import std.algorithm : canFind;
+
+    string original;
+    string diff;
+    const bool multiline = got.canFind("\n");
+
+    if (multiline)
+    {
+        auto diffPair = multiLineDiff(expected.split("\n"), got.split("\n"));
+
+        original = diffPair.original.join("\n");
+        diff = diffPair.target.join("\n");
+    }
+    else
+    {
+        auto diffPair = oneLineDiff(expected, got);
+
+        original = diffPair.original;
+        diff = diffPair.target;
+    }
+
+    const string fmt = (multiline ? "\n" : "") ~ (quote ? "'%s'" : "%s");
+
+    throw new FluentException(
+        format(fmt, original),
+        format(fmt, diff),
+        file, line
+    );
 }
 
 private auto oneLineDiff(string expected, string text) @safe

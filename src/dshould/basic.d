@@ -511,7 +511,7 @@ if (isInstanceOf!(ShouldType, Should))
     }
 }
 
-private string quote(T)(T t)
+package string quote(T)(T t)
 {
     import std.typecons : Nullable;
 

@@ -18,21 +18,66 @@ public import dshould.thrown;
 public void equal(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
+    import prettyprint : prettyprint;
+    import std.conv : to;
     import std.json : JSONValue;
     import std.traits : Unqual;
+    import std.typecons : No;
 
-    static if (is(typeof(should.got()) == string) && is(T == string) && !should.hasWord!"not")
+    static if (!should.hasWord!"not")
     {
-        dshould.stringcmp.equal(should, value, Fence(), file, line);
+        static if (is(typeof(should.got()) == string) && is(T == string))
+        {
+            auto got = should.got();
+            const gotString = got.quote;
+            const valueString = value.quote;
+
+            should.terminateChain;
+        }
+        else static if (
+            is(Unqual!T == JSONValue)
+            && is(Unqual!(typeof(should.got())) == JSONValue))
+        {
+            should.allowOnlyWords!().before!"equal (string)";
+
+            auto got = should.got();
+            const gotString = got.toPrettyString;
+            const valueString = value.toPrettyString;
+
+            should.terminateChain;
+        }
+        else static if (
+            __traits(compiles, T.init.toString())
+            && __traits(compiles, typeof(should.got()).init.toString()))
+        {
+            should.allowOnlyWords!().before!"equal (string)";
+
+            auto got = should.got();
+            const gotString = got.toString().prettyprint;
+            const valueString = value.toString().prettyprint;
+
+            should.terminateChain;
+        }
+        else static if (
+            __traits(compiles, T.init[0].toString())
+            && __traits(compiles, typeof(should.got()).init[0].toString()))
+        {
+            should.allowOnlyWords!().before!"equal (string)";
+
+            auto got = should.got();
+            const gotString = got.to!string.prettyprint;
+            const valueString = value.to!string.prettyprint;
+
+            should.terminateChain;
+        }
     }
-    else static if (
-        is(Unqual!T == JSONValue)
-        && is(Unqual!(typeof(should.got())) == JSONValue)
-        && !should.hasWord!"not"
-    )
+
+    static if (__traits(compiles, got))
     {
-        should.terminateChain;
-        should.got().toPrettyString.should.equal(value.toPrettyString, Fence(), file, line);
+        if (got != value)
+        {
+            stringCmpError(gotString, valueString, No.quote, file, line);
+        }
     }
     else
     {
@@ -44,6 +89,36 @@ public auto equal(Should)(Should should)
 if (isInstanceOf!(ShouldType, Should))
 {
     return dshould.basic.equal(should);
+}
+
+/// be is equivalent to equal for the .should.be(value) case
+public void be(Should, T)(Should should, T value, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    static if (should.hasNoWords && !is(T == typeof(null)))
+    {
+        return equal(should, value, Fence(), file, line);
+    }
+    else
+    {
+        // be is basic.be for all other cases
+        return dshould.basic.be(should, value, Fence(), file, line);
+    }
+}
+
+// be is basic.be for all other cases
+public auto be(Should)(Should should)
+if (isInstanceOf!(ShouldType, Should))
+{
+    return dshould.basic.be(should);
+}
+
+// be is basic.be for all other cases
+public auto be(Should, T)(
+    Should should, T expected, ErrorValue error, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should) && should.hasWord!"approximately")
+{
+    return dshould.basic.be(should, expected, error, Fence(), file, line);
 }
 
 /**
@@ -137,18 +212,20 @@ unittest
 {
     import std.json : parseJSON;
 
-    const expected = `Test failed: expected ' {
+    const expected = `Test failed: expected ` ~ `
+ {
 ` ~ red(`-    "b": "Bar"`) ~ `
- }
-', but got '
+ }, but got ` ~ `
  {
 ` ~ green(`+    "a": "Foo"`) ~ `
- }'`;
+ }`;
 
     const left = parseJSON(`{"a": "Foo"}`);
     const right = parseJSON(`{"b": "Bar"}`);
 
     left.should.equal(right)
+        .should.throwA!FluentException(expected);
+    left.should.be(right)
         .should.throwA!FluentException(expected);
 }
 
@@ -192,7 +269,7 @@ unittest
     Nullable!int(42).should.not.equal(Nullable!int());
 
     Nullable!int(42).should.equal(Nullable!int()).should.throwA!FluentException
-        ("Test failed: expected value == Nullable!int.null, but got 42");
+        ("Test failed: expected Nullable.null, but got 42");
 }
 
 @("nullable equality")
@@ -216,4 +293,27 @@ unittest
 
     foo.should.equal(2).should.throwAn!Exception("foo");
     2.should.equal(foo).should.throwAn!Exception("foo");
+}
+
+@("compare two unequal values with the same toString")
+unittest
+{
+    class Class
+    {
+        override bool opEquals(const Object other) const
+        {
+            return false;
+        }
+
+        override string toString() const
+        {
+            return "Class";
+        }
+    }
+
+    auto first = new Class;
+    auto second = new Class;
+
+    (first == second).should.be(false);
+    first.should.equal(second).should.throwAn!Exception("Test failed: expected Class, but got Class");
 }
