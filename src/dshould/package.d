@@ -144,6 +144,15 @@ public template throwA(T : Throwable)
 /// ditto
 public alias throwAn = throwA;
 
+@("equal is @safe")
+@safe unittest
+{
+    import std.datetime : TimeOfDay;
+
+    "Hello World".should.equal("Hello World");
+    TimeOfDay(1, 2, 3).should.equal(TimeOfDay(1, 2, 3));
+}
+
 @("because defines reason for assertion")
 unittest
 {
