@@ -25,7 +25,7 @@ if (isInstanceOf!(ShouldType, Should) && is(T == string))
     }
 }
 
-package void stringCmpError(string got, string expected, Flag!"quote" quote, string file, size_t line)
+package void stringCmpError(string got, string expected, Flag!"quote" quote, string file, size_t line) @safe
 {
     import std.algorithm : canFind;
 
@@ -80,7 +80,7 @@ private auto oneLineDiff(string expected, string text) @safe
 }
 
 @("collates successive replacements")
-unittest
+@safe unittest
 {
     const expectedOriginal = "Hello W" ~ red("or") ~ "ld";
     const expectedTarget = "Hello W" ~ green("ey") ~ "ld";
@@ -90,7 +90,7 @@ unittest
 }
 
 @("does not colorize diff view for strings that are too different")
-unittest
+@safe unittest
 {
     const diff = "Hello World".oneLineDiff("Goodbye Universe");
 
@@ -98,14 +98,14 @@ unittest
 }
 
 @("tries to not change diff mode too often")
-unittest
+@safe unittest
 {
     const cleanDiff = `method="` ~ green(`multiply`) ~ `"`;
 
     `method="update"`.oneLineDiff(`method="multiply"`).target.should.equal(cleanDiff);
 }
 
-unittest
+@safe unittest
 {
     const originalText = "test";
     const targetText = "test, but";
@@ -139,7 +139,7 @@ private auto multiLineDiff(string[] expected, string[] text) @safe
 }
 
 @("supports multiline diff")
-unittest
+@safe unittest
 {
     import std.string : join, split;
 
@@ -184,7 +184,7 @@ unittest
 }
 
 @("supports comparison of large strings")
-unittest
+@safe unittest
 {
     import std.string : join, split;
 
@@ -218,7 +218,7 @@ private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepP
         return Nullable!T.init; // no diff view, too different
     }
 
-    void flushAdd()
+    void flushAdd() @safe
     {
         if (!addBuffer.data.empty)
         {
@@ -227,7 +227,7 @@ private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepP
         }
     }
 
-    void flushRemove()
+    void flushRemove() @safe
     {
         if (!removeBuffer.data.empty)
         {
@@ -236,25 +236,25 @@ private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepP
         }
     }
 
-    void add(ElementType!T element)
+    void add(ElementType!T element) @safe
     {
         flushRemove;
         addBuffer ~= element;
     }
 
-    void remove(ElementType!T element)
+    void remove(ElementType!T element) @safe
     {
         flushAdd;
         removeBuffer ~= element;
     }
 
-    void flush()
+    void flush() @safe
     {
         flushRemove;
         flushAdd;
     }
 
-    void same(ElementType!T element)
+    void same(ElementType!T element) @safe
     {
         flush;
         diff ~= keepPred([element]);
@@ -315,7 +315,7 @@ private struct Levenshtein(Range)
 {
     @disable this();
 
-    public this(Range s, Range t)
+    public this(Range s, Range t) @safe
     {
         import std.algorithm : min;
 
