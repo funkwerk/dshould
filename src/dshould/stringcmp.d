@@ -57,7 +57,7 @@ package void stringCmpError(string got, string expected, Flag!"quote" quote, str
     );
 }
 
-private auto oneLineDiff(string expected, string text) @safe
+public auto oneLineDiff(string expected, string text) @safe
 {
     alias removePred = text => red(text);
     alias addPred = text => green(text);
@@ -116,7 +116,7 @@ private auto oneLineDiff(string expected, string text) @safe
     }
 }
 
-private auto multiLineDiff(string[] expected, string[] text) @safe
+public auto multiLineDiff(string[] expected, string[] text) @safe
 {
     alias removePred = lines => lines.map!(line => red("-" ~ line));
     alias addPred = lines => lines.map!(line => green("+" ~ line));
@@ -197,7 +197,7 @@ private auto multiLineDiff(string[] expected, string[] text) @safe
 }
 
 // TODO bracket crossing cost
-private Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) @trusted
+public Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) @trusted
 {
     import std.algorithm : count;
     import std.array : Appender, empty;
