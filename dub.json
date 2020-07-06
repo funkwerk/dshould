@@ -19,7 +19,7 @@
 					"version": "*",
 					"optional": true
 				},
-				"prettyprint": "~>1.0",
+				"prettyprint": ">=1.0.6",
 			}
 		},
 		{
@@ -31,7 +31,7 @@
 			"mainSourceFile": "build/ut.d",
 			"dependencies": {
 				"unit-threaded": "~>1.0",
-				"prettyprint": "~>1.0",
+				"prettyprint": ">=1.0.6",
 			}
 		}
 	]

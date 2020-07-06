@@ -25,7 +25,7 @@ if (isInstanceOf!(ShouldType, Should) && is(T == string))
     }
 }
 
-package void stringCmpError(string got, string expected, Flag!"quote" quote, string file, size_t line) @safe
+package void stringCmpError(string got, string expected, Flag!"quote" quote, string file, size_t line) pure @safe
 {
     import std.algorithm : canFind;
 
@@ -57,7 +57,7 @@ package void stringCmpError(string got, string expected, Flag!"quote" quote, str
     );
 }
 
-public auto oneLineDiff(string expected, string text) @safe
+public auto oneLineDiff(string expected, string text) pure @safe
 {
     alias removePred = text => red(text);
     alias addPred = text => green(text);
@@ -197,7 +197,7 @@ public auto multiLineDiff(string[] expected, string[] text) @safe
 }
 
 // TODO bracket crossing cost
-public Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) @trusted
+public Nullable!T colorizedDiff(T, alias removePred, alias addPred, alias keepPred)(T expected, T text) pure @trusted
 {
     import std.algorithm : count;
     import std.array : Appender, empty;

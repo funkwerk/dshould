@@ -144,8 +144,8 @@ public template throwA(T : Throwable)
 /// ditto
 public alias throwAn = throwA;
 
-@("equal is @safe")
-@safe unittest
+@("equal is pure @safe")
+pure @safe unittest
 {
     import std.datetime : TimeOfDay;
 
