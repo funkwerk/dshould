@@ -117,6 +117,54 @@ unittest
     assocArray.should.not.contain.any(["x": "b"]);
 }
 
+/**
+ * The phrase `.contain.exactly` indicates that two ranges are expected to contain exactly
+ * the same elements, but possibly in a different order.
+ */
+public void exactly(Should, T)(
+        Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    import std.format : format;
+
+    should.requireWord!"contain".before!"exactly";
+    should.allowOnlyWords!"contain".before!"exactly";
+
+    with (should)
+    {
+        auto got = should.got();
+
+        foreach (value; got)
+        {
+            check(
+                expected.canFind(value),
+                format("range containing exactly %s", expected),
+                format("extra value %s in %s", value, got),
+                file, line);
+        }
+
+        foreach (value; expected)
+        {
+            check(
+                got.canFind(value),
+                format("range containing %s", expected),
+                format("%s missing %s", got, value),
+                file, line);
+        }
+    }
+}
+
+///
+unittest
+{
+    import dshould.thrown : throwA;
+
+    [3, 4].should.contain.exactly([3, 4]);
+    [3, 4].should.contain.exactly([4, 3]);
+    [3, 4].should.contain.exactly([3]).should.throwA!FluentException;
+    [3, 4].should.contain.exactly([3, 4, 5]).should.throwA!FluentException;
+}
+
 private void checkContain(Should, T)(Should should, T expected, string file, size_t line)
 if (isInstanceOf!(ShouldType, Should) && isAssociativeArray!T && is(const typeof(should.got()) == const T))
 {
