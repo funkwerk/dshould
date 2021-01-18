@@ -125,6 +125,7 @@ public void exactly(Should, T)(
         Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
+    import std.algorithm : all, sort;
 
     should.requireWord!"contain".before!"exactly";
     should.allowOnlyWords!"contain".before!"exactly";
@@ -144,30 +145,18 @@ if (isInstanceOf!(ShouldType, Should))
         return format(
             "\n[\n%-(%s,\n%)\n]",
             colorizedDiff!(string[], removePred, addPred, keepPred)(
-                lhs.map!(to!string).array, rhs.map!(to!string).array));
+                lhs.map!(to!string).array.sort.array, rhs.map!(to!string).array.sort.array));
     }
 
     with (should)
     {
         auto got = should.got();
 
-        foreach (value; got)
-        {
-            check(
-                expected.canFind(value),
-                "exact set of values",
-                colorCodedDelta(got, expected),
-                file, line);
-        }
-
-        foreach (value; expected)
-        {
-            check(
-                got.canFind(value),
-                "exact set of values",
-                colorCodedDelta(got, expected),
-                file, line);
-        }
+        check(
+            got.all!(a => expected.canFind(a)) && expected.all!(a => got.canFind(a)),
+            "exact set of values",
+            colorCodedDelta(got, expected),
+            file, line);
     }
 }
 
