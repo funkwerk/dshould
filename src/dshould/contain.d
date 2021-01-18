@@ -125,10 +125,27 @@ public void exactly(Should, T)(
         Should should, T expected, Fence _ = Fence(), string file = __FILE__, size_t line = __LINE__)
 if (isInstanceOf!(ShouldType, Should))
 {
-    import std.format : format;
 
     should.requireWord!"contain".before!"exactly";
     should.allowOnlyWords!"contain".before!"exactly";
+
+    string colorCodedDelta(LHS, RHS)(LHS lhs, RHS rhs)
+    {
+        import dshould.stringcmp : colorizedDiff, green, red;
+        import std.array : array;
+        import std.conv : to;
+        import std.algorithm : map;
+        import std.format : format;
+
+        alias removePred = lines => lines.map!(line => red("-  " ~ line));
+        alias addPred = lines => lines.map!(line => green("+  " ~ line));
+        alias keepPred = lines => lines.map!(line => "   " ~ line);
+
+        return format(
+            "\n[\n%-(%s,\n%)\n]",
+            colorizedDiff!(string[], removePred, addPred, keepPred)(
+                lhs.map!(to!string).array, rhs.map!(to!string).array));
+    }
 
     with (should)
     {
@@ -138,8 +155,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 expected.canFind(value),
-                format("range containing exactly %s", expected),
-                format("extra value %s in %s", value, got),
+                "exact set of values",
+                colorCodedDelta(got, expected),
                 file, line);
         }
 
@@ -147,8 +164,8 @@ if (isInstanceOf!(ShouldType, Should))
         {
             check(
                 got.canFind(value),
-                format("range containing %s", expected),
-                format("%s missing %s", got, value),
+                "exact set of values",
+                colorCodedDelta(got, expected),
                 file, line);
         }
     }
@@ -157,12 +174,32 @@ if (isInstanceOf!(ShouldType, Should))
 ///
 unittest
 {
+    import dshould : equal;
+    import dshould.stringcmp : green, red;
     import dshould.thrown : throwA;
 
     [3, 4].should.contain.exactly([3, 4]);
     [3, 4].should.contain.exactly([4, 3]);
-    [3, 4].should.contain.exactly([3]).should.throwA!FluentException;
-    [3, 4].should.contain.exactly([3, 4, 5]).should.throwA!FluentException;
+    [3, 4].should.contain.exactly([3]).should.throwA!FluentException.where.msg.should.equal(
+        "Test failed: expected exact set of values, but got \n"
+        ~ "[\n"
+        ~ "   3,\n"
+        ~ red("-  4") ~ "\n"
+        ~ "]");
+    [3, 4].should.contain.exactly([3, 4, 5]).should.throwA!FluentException.where.msg.should.equal(
+        "Test failed: expected exact set of values, but got \n"
+        ~ "[\n"
+        ~ "   3,\n"
+        ~ "   4,\n"
+        ~ green("+  5") ~ "\n"
+        ~ "]");
+    [3, 4].should.contain.exactly([3, 5]).should.throwA!FluentException.where.msg.should.equal(
+        "Test failed: expected exact set of values, but got \n"
+        ~ "[\n"
+        ~ "   3,\n"
+        ~ green("+  5") ~ ",\n"
+        ~ red("-  4") ~ "\n"
+        ~ "]");
 }
 
 private void checkContain(Should, T)(Should should, T expected, string file, size_t line)
