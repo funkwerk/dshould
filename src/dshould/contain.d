@@ -145,7 +145,7 @@ if (isInstanceOf!(ShouldType, Should))
         return format(
             "\n[\n%-(%s,\n%)\n]",
             colorizedDiff!(string[], removePred, addPred, keepPred)(
-                lhs.map!(to!string).array.sort.array, rhs.map!(to!string).array.sort.array));
+                rhs.map!(to!string).array.sort.array, lhs.map!(to!string).array.sort.array));
     }
 
     with (should)
@@ -173,21 +173,21 @@ unittest
         "Test failed: expected exact set of values, but got \n"
         ~ "[\n"
         ~ "   3,\n"
-        ~ red("-  4") ~ "\n"
+        ~ green("+  4") ~ "\n"
         ~ "]");
     [3, 4].should.contain.exactly([3, 4, 5]).should.throwA!FluentException.where.msg.should.equal(
         "Test failed: expected exact set of values, but got \n"
         ~ "[\n"
         ~ "   3,\n"
         ~ "   4,\n"
-        ~ green("+  5") ~ "\n"
+        ~ red("-  5") ~ "\n"
         ~ "]");
     [3, 4].should.contain.exactly([3, 5]).should.throwA!FluentException.where.msg.should.equal(
         "Test failed: expected exact set of values, but got \n"
         ~ "[\n"
         ~ "   3,\n"
-        ~ green("+  5") ~ ",\n"
-        ~ red("-  4") ~ "\n"
+        ~ green("+  4") ~ ",\n"
+        ~ red("-  5") ~ "\n"
         ~ "]");
 }
 
