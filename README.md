@@ -42,6 +42,8 @@ When a test fails, the message is always a variation of "Expected [right], but g
 
     array.should.contain.only(values);
 
+    range.should.contain.exactly(values); // unordered comparison
+
 # Strings
 
     string.should.not.be.empty;

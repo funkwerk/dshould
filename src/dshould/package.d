@@ -171,7 +171,7 @@ unittest
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException("Test failed: expected value == 3, but got 2");
+    2.should.be(3).should.throwA!FluentException("Test failed: expected 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
@@ -281,15 +281,26 @@ unittest
         ("Test failed: expected Nullable.null, but got 42");
 }
 
-@("nullable equality")
+@("nullable equality with value")
 unittest
 {
     import std.typecons : Nullable;
 
     Nullable!string().should.not.equal("");
 
-    Nullable!string().should.equal("").should.throwA!FluentException
-        ("Test failed: expected value == '', but got Nullable!string.null");
+    Nullable!string().should.equal("")
+        .should.throwA!FluentException("Test failed: expected '', but got Nullable.null");
+}
+
+@("value equality with nullable")
+unittest
+{
+    import std.typecons : Nullable;
+
+    "".should.not.equal(Nullable!string());
+
+    "".should.equal(Nullable!string())
+        .should.throwA!FluentException("Test failed: expected Nullable.null, but got ''");
 }
 
 @("exception thrown by value is not hijacked by unterminated should-chain error")
@@ -324,5 +335,6 @@ unittest
     auto second = new Class;
 
     (first == second).should.be(false);
-    first.should.equal(second).should.throwAn!Exception("Test failed: expected Class, but got Class");
+    first.should.equal(second)
+        .should.throwAn!Exception("Test failed: expected Class, but got Class");
 }
