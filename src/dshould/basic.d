@@ -307,8 +307,8 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got", "expected")),
-            format("value %s", enums.message.format(expected.quote)),
-            format("%s", got.quote),
+            format(enums.message, expected.quote),
+            got.quote,
             file, line
         );
     }
@@ -332,8 +332,8 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got", "expected")),
-            format("value %s", enums.message.format(expected.quote)),
-            format("%s", got.quote),
+            format(enums.message, expected.quote),
+            got.quote,
             file, line
         );
     }
@@ -357,8 +357,8 @@ if (isInstanceOf!(ShouldType, Should)
 
         check(
             mixin(format!(enums.checkString)("got.array", "expected.array")),
-            format("value %s", enums.message.format(expected.quote)),
-            format("%s", got.quote),
+            format(enums.message, expected.quote),
+            got.quote,
             file, line
         );
     }
@@ -378,12 +378,17 @@ private template numericComparison(Should, T)
     static if (Should.hasWord!"not")
     {
         enum checkString = "!(%s " ~ combined ~ " %s)";
-        enum message = "not " ~ combined ~ " %s";
+        enum message = "value not " ~ combined ~ " %s";
+    }
+    else static if (combined == "==")
+    {
+        enum checkString = "%s == %s";
+        enum message = "%s";
     }
     else
     {
         enum checkString = "%s " ~ combined ~ " %s";
-        enum message = combined ~ " %s";
+        enum message = "value " ~ combined ~ " %s";
     }
 }
 
@@ -519,7 +524,7 @@ package string quote(T)(T t)
     {
         if (t.isNull)
         {
-            return (typeof(cast() t)).stringof ~ ".null";
+            return "Nullable.null";
         }
     }
 
