@@ -338,3 +338,21 @@ unittest
     first.should.equal(second)
         .should.throwAn!Exception("Test failed: expected Class, but got Class");
 }
+
+@("nullable should be null")
+unittest
+{
+    import std.typecons : Nullable;
+
+    Nullable!int().should.not.beNull
+        .should.throwA!FluentException("Test failed: expected non-null Nullable, but got Nullable.null");
+    Nullable!int(5).should.beNull
+        .should.throwA!FluentException("Test failed: expected Nullable.null, but got 5");
+}
+
+@("object should be null")
+unittest
+{
+    Object.init.should.not.beNull.should.throwA!FluentException("Test failed: expected non-null, but got null");
+    (new Object).should.beNull.should.throwA!FluentException("Test failed: expected null, but got object.Object");
+}

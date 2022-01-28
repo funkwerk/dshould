@@ -3,6 +3,7 @@ module dshould.basic;
 import std.format : format;
 import std.range : isInputRange;
 import std.string : empty;
+import std.typecons : Nullable;
 import dshould.ShouldType;
 public import dshould.ShouldType : should;
 
@@ -126,6 +127,52 @@ unittest
 
     a.should.equal(b);
     b.should.equal(a);
+}
+
+/**
+ * `Nullable!int().should.beNull` tests that the `Nullable` is null.
+ * `should.not.beNull` tests the reverse.
+ */
+public void beNull(Should)(Should should, string file = __FILE__, size_t line = __LINE__)
+if (isInstanceOf!(ShouldType, Should))
+{
+    import std.format : format;
+
+    should.allowOnlyWords!("not")
+        .before!"beNull";
+
+    auto got = should.got();
+
+    static if (__traits(compiles, got is null))
+    {
+        compareReference(should, null, Fence(), file, line);
+        return;
+    }
+    else
+    {
+        static assert(is(typeof(got) : Nullable!T, T));
+        static if (Should.hasWord!"not")
+        {
+            should.check(!got.isNull, "non-null Nullable", format!"%s"(got), file, line);
+        }
+        else
+        {
+            should.check(got.isNull, "Nullable.null", format!"%s"(got), file, line);
+        }
+    }
+}
+
+///
+unittest
+{
+    Nullable!int().should.beNull;
+    Nullable!int(5).should.not.beNull;
+}
+
+///
+unittest
+{
+    Object.init.should.beNull;
 }
 
 /**
