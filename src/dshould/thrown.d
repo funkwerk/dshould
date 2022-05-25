@@ -46,7 +46,7 @@ public template throwA(T : Throwable)
                 }
             }
 
-            static if (!should.hasWord!"not")
+            static if (!should.hasWord!"not" && !is(typeof(should.got()) == noreturn))
             {
                 return null;
             }
@@ -122,4 +122,14 @@ unittest
     2.should.be(5).should.throwAn!Error.should.throwA!FluentException;
 
     2.should.be(2).should.not.throwA!FluentException;
+}
+
+@("noreturn function that throws")
+unittest
+{
+    noreturn foo()
+    {
+        throw new Exception("test");
+    }
+    foo.should.throwAn!Exception;
 }
