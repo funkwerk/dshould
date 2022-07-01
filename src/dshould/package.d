@@ -157,21 +157,21 @@ pure @safe unittest
 unittest
 {
     2.should.be(5).because("string A")
-        .should.throwA!FluentException.where.reason.should.equal("string A");
+        .should.throwA!FluentError.where.reason.should.equal("string A");
 }
 
 @("compares messages in throwA string overload")
 unittest
 {
     2.should.be(5).because("string A")
-        .should.throwA!FluentException("string B")
-        .should.throwA!FluentException;
+        .should.throwA!FluentError("string B")
+        .should.throwA!FluentError;
 }
 
 @("prints informative errors for int comparison")
 unittest
 {
-    2.should.be(3).should.throwA!FluentException("Test failed: expected 3, but got 2");
+    2.should.be(3).should.throwA!FluentError("Test failed: expected 3, but got 2");
 }
 
 @("prints informative errors for object comparison")
@@ -180,19 +180,19 @@ unittest
     Object obj;
 
     obj.should.not.be(null)
-        .should.throwA!FluentException("Test failed: expected non-null, but got null");
+        .should.throwA!FluentError("Test failed: expected non-null, but got null");
 
     obj = new Object;
 
     obj.should.be(null)
-        .should.throwA!FluentException("Test failed: expected null, but got object.Object");
+        .should.throwA!FluentError("Test failed: expected null, but got object.Object");
 
     obj.should.not.be.same.as(obj)
-        .should.throwA!FluentException(
+        .should.throwA!FluentError(
             "Test failed: expected different reference than object.Object, but got same reference");
 
     obj.should.be.same.as(new Object)
-        .should.throwA!FluentException(
+        .should.throwA!FluentError(
             "Test failed: expected same reference as object.Object, but got object.Object");
 }
 
@@ -200,20 +200,20 @@ unittest
 unittest
 {
     2.should.be.greater.equal(5)
-        .should.throwA!FluentException("Test failed: expected value >= 5, but got 2");
+        .should.throwA!FluentError("Test failed: expected value >= 5, but got 2");
 
     2.should.not.be.less.equal(5)
-        .should.throwA!FluentException("Test failed: expected value not <= 5, but got 2");
+        .should.throwA!FluentError("Test failed: expected value not <= 5, but got 2");
 }
 
 @("prints informative errors for range emptiness")
 unittest
 {
     (int[]).init.should.not.be.empty
-        .should.throwA!FluentException("Test failed: expected nonempty range, but got []");
+        .should.throwA!FluentError("Test failed: expected nonempty range, but got []");
 
     [5].should.be.empty
-        .should.throwA!FluentException("Test failed: expected empty range, but got [5]");
+        .should.throwA!FluentError("Test failed: expected empty range, but got [5]");
 }
 
 @("prettyprints json values for comparison")
@@ -233,19 +233,19 @@ unittest
     const right = parseJSON(`{"b": "Bar"}`);
 
     left.should.equal(right)
-        .should.throwA!FluentException(expected);
+        .should.throwA!FluentError(expected);
     left.should.be(right)
-        .should.throwA!FluentException(expected);
+        .should.throwA!FluentError(expected);
 }
 
 @("prints informative errors for approximate checks")
 unittest
 {
     2.should.approximately.be(4, error=0.5)
-        .should.throwA!FluentException("Test failed: expected 4 ± 0.5, but got 2");
+        .should.throwA!FluentError("Test failed: expected 4 ± 0.5, but got 2");
 
     (2.4).should.not.approximately.be(2, error=0.5)
-        .should.throwA!FluentException("Test failed: expected value outside 2 ± 0.5, but got 2.4");
+        .should.throwA!FluentError("Test failed: expected value outside 2 ± 0.5, but got 2.4");
 }
 
 @("asserts when forgetting to terminate should expression")
@@ -277,7 +277,7 @@ unittest
 
     Nullable!int(42).should.not.equal(Nullable!int());
 
-    Nullable!int(42).should.equal(Nullable!int()).should.throwA!FluentException
+    Nullable!int(42).should.equal(Nullable!int()).should.throwA!FluentError
         ("Test failed: expected Nullable.null, but got 42");
 }
 
@@ -289,7 +289,7 @@ unittest
     Nullable!string().should.not.equal("");
 
     Nullable!string().should.equal("")
-        .should.throwA!FluentException("Test failed: expected '', but got Nullable.null");
+        .should.throwA!FluentError("Test failed: expected '', but got Nullable.null");
 }
 
 @("value equality with nullable")
@@ -300,7 +300,7 @@ unittest
     "".should.not.equal(Nullable!string());
 
     "".should.equal(Nullable!string())
-        .should.throwA!FluentException("Test failed: expected Nullable.null, but got ''");
+        .should.throwA!FluentError("Test failed: expected Nullable.null, but got ''");
 }
 
 @("exception thrown by value is not hijacked by unterminated should-chain error")
@@ -336,7 +336,7 @@ unittest
 
     (first == second).should.be(false);
     first.should.equal(second)
-        .should.throwAn!Exception("Test failed: expected Class, but got Class");
+        .should.throwA!FluentError("Test failed: expected Class, but got Class");
 }
 
 @("nullable should be null")
@@ -345,14 +345,14 @@ unittest
     import std.typecons : Nullable;
 
     Nullable!int().should.not.beNull
-        .should.throwA!FluentException("Test failed: expected non-null Nullable, but got Nullable.null");
+        .should.throwA!FluentError("Test failed: expected non-null Nullable, but got Nullable.null");
     Nullable!int(5).should.beNull
-        .should.throwA!FluentException("Test failed: expected Nullable.null, but got 5");
+        .should.throwA!FluentError("Test failed: expected Nullable.null, but got 5");
 }
 
 @("object should be null")
 unittest
 {
-    Object.init.should.not.beNull.should.throwA!FluentException("Test failed: expected non-null, but got null");
-    (new Object).should.beNull.should.throwA!FluentException("Test failed: expected null, but got object.Object");
+    Object.init.should.not.beNull.should.throwA!FluentError("Test failed: expected non-null, but got null");
+    (new Object).should.beNull.should.throwA!FluentError("Test failed: expected null, but got object.Object");
 }

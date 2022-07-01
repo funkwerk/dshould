@@ -1,5 +1,6 @@
 module dshould.ShouldType;
 
+import core.exception : AssertError;
 import std.algorithm : map;
 import std.format : format;
 import std.meta : allSatisfy;
@@ -123,7 +124,7 @@ public struct ShouldType(G, string[] phrase = [])
 
         if (!condition)
         {
-            throw new FluentException(expected, butGot, file, line);
+            throw new FluentError(expected, butGot, file, line);
         }
     }
 
@@ -238,7 +239,7 @@ unittest
     [5].should.not.be.empty;
 }
 
-private class FluentExceptionImpl(T : Exception) : T
+private class FluentErrorImpl(T : AssertError) : T
 {
     private const string expectedPart = null; // before reason
     public const string reason = null;
@@ -290,9 +291,9 @@ private class FluentExceptionImpl(T : Exception) : T
         super(combinedMessage, file, line);
     }
 
-    public FluentException because(string reason) pure @safe
+    public FluentError because(string reason) pure @safe
     {
-        return new FluentException(this.expectedPart, reason, this.butGotPart, this.file, this.line);
+        return new FluentError(this.expectedPart, reason, this.butGotPart, this.file, this.line);
     }
 
     private @property string combinedMessage() pure @safe
@@ -325,23 +326,13 @@ public T because(T)(lazy T value, string reason)
     {
         return value;
     }
-    catch (FluentException fluentException)
+    catch (FluentError fluentError)
     {
-        throw fluentException.because(reason);
+        throw fluentError.because(reason);
     }
 }
 
-static if (__traits(compiles, { import unit_threaded.should : UnitTestException; }))
-{
-    import unit_threaded.should : UnitTestException;
+public alias FluentError = FluentErrorImpl!AssertError;
 
-    /**
-     * Indicates a fluent assert has failed, as well as what was tested, why it was tested, and what the outcome was.
-     * When unit_threaded is provided, FluentException is a unit_threaded test exception.
-     */
-    public alias FluentException = FluentExceptionImpl!UnitTestException;
-}
-else
-{
-    public alias FluentException = FluentExceptionImpl!Exception;
-}
+deprecated("replace FluentException with FluentError")
+public alias FluentException = FluentError;

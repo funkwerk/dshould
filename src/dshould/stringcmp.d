@@ -50,7 +50,7 @@ package void stringCmpError(string got, string expected, Flag!"quote" quote, str
 
     const string fmt = (multiline ? "\n" : "") ~ (quote ? "'%s'" : "%s");
 
-    throw new FluentException(
+    throw new FluentError(
         format(fmt, original),
         format(fmt, diff),
         file, line

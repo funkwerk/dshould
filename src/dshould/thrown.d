@@ -9,7 +9,7 @@ import dshould.basic : be, equal, not, should;
 /**
  * The phrase `.should.throwA!Type` (or `.throwAn!Exception`, depending on grammar) expects the left-hand side expression
  * to throw an exception of the given type.
- * The exception is caught. If no exception was thrown, `.throwA` itself throws a `FluentException` to complain.
+ * The exception is caught. If no exception was thrown, `.throwA` itself throws a `FluentError` to complain.
  * If the left-hand side threw an exception, the word `.where` may be used to inspect this exception further.
  * The meaning of `.throwA` may be negated with `.not`, in which case nothing is returned.
  */
@@ -22,7 +22,7 @@ public template throwA(T : Throwable)
 
         should.terminateChain;
 
-        FluentException innerError = null;
+        FluentError innerError = null;
 
         auto inner()
         {
@@ -34,7 +34,7 @@ public template throwA(T : Throwable)
             {
                 static if (should.hasWord!"not")
                 {
-                    innerError = new FluentException(
+                    innerError = new FluentError(
                         format!`no exception of type %s`(T.stringof),
                         format!`%s`(throwable),
                         file, line
@@ -76,7 +76,7 @@ public template throwA(T : Throwable)
             }
             else
             {
-                throw new FluentException(
+                throw new FluentError(
                     format!`exception of type %s`(T.stringof),
                     format!`%s`(otherThrowable),
                     file, line
@@ -93,7 +93,7 @@ public template throwA(T : Throwable)
         }
         else
         {
-            throw new FluentException(
+            throw new FluentError(
                 format!`exception of type %s`(T.stringof),
                 `no exception`,
                 file, line
@@ -118,10 +118,10 @@ unittest
     throwsException.should.throwAn!Exception.which.should.be(exception);
     throwsException.should.throwAn!Exception.which.should.not.be(null);
 
-    2.should.be(5).should.throwA!FluentException;
-    2.should.be(5).should.throwAn!Error.should.throwA!FluentException;
+    2.should.be(5).should.throwA!FluentError;
+    2.should.be(5).should.throwAn!Exception.should.throwA!FluentError;
 
-    2.should.be(2).should.not.throwA!FluentException;
+    2.should.be(2).should.not.throwA!FluentError;
 }
 
 @("noreturn function that throws")
