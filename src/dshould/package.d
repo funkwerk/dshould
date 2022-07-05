@@ -6,6 +6,7 @@ public import dshould.ShouldType : because, should;
 public import dshould.basic;
 public import dshould.contain;
 public import dshould.empty;
+public import dshould.json;
 public import dshould.stringcmp;
 public import dshould.thrown;
 
