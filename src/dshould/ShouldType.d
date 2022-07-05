@@ -239,7 +239,7 @@ unittest
     [5].should.not.be.empty;
 }
 
-private class FluentErrorImpl(T : AssertError) : T
+private class FluentErrorImpl(T = AssertError) : T
 {
     private const string expectedPart = null; // before reason
     public const string reason = null;
@@ -332,7 +332,20 @@ public T because(T)(lazy T value, string reason)
     }
 }
 
-public alias FluentError = FluentErrorImpl!AssertError;
+/**
+ * Indicates a fluent assert has failed, as well as what was tested, why it was tested, and what the outcome was.
+ * When unit_threaded is provided, FluentError is a unit_threaded test error.
+ */
+static if (__traits(compiles, { import unit_threaded.exception : UnitTestError; }))
+{
+    import unit_threaded.exception : UnitTestError;
+
+    public alias FluentError = FluentErrorImpl!UnitTestError;
+}
+else
+{
+    public alias FluentError = FluentErrorImpl!AssertError;
+}
 
 deprecated("replace FluentException with FluentError")
 public alias FluentException = FluentError;
